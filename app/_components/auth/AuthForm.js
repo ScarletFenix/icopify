@@ -21,7 +21,7 @@ const AuthForm = () => {
                         </button>
                     </div>
                 </div>
-                <div className="p-8 w-full md:w-3/4 flex flex-col justify-center h-full">
+                <div className="p-8 w-full md:w-3/4 flex flex-col justify-center h-full max-w-md mx-auto">
                     <h2 className="text-3xl font-bold mb-4">{isLogin ? "Log in" : "Create New Account"}</h2>
                     <form>
                         <div className="mb-4">
