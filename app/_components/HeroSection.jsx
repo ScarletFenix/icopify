@@ -1,16 +1,23 @@
-"use client"
+"use client";
 import StatsSection from './StatsSection';
 import { FaUserPlus, FaTag } from 'react-icons/fa';
 
 export default function HeroSection() {
   return (
-    <section className="relative h-screen bg-dark flex flex-col items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url(/hero-bg.jpg)" }}>
+    <section 
+      className="relative h-screen flex flex-col items-center justify-center bg-cover bg-center" 
+      style={{ backgroundImage: "url(/hero-bg.jpg)" }}
+    >
       <div className="text-center text-white flex-1 flex flex-col justify-center">
-        <h1 className="text-5xl font-bold mb-4">
+        <h1 className="text-4xl md:text-5xl lg:text-[55px] font-bold mb-4 leading-tight">
           Premium Guest Posting <span className="text-yellow-400">Services</span>
         </h1>
-        <h3 className="text-2xl mb-2">Get <span className="text-yellow-400">Backlinks</span> From High-Quality Websites</h3>
-        <h4 className="text-xl mb-6">Only Pay If You Are Satisfied With The Results</h4>
+        <h3 className="text-xl md:text-2xl lg:text-3xl mb-2 font-semibold">
+          Get <span className="text-yellow-400">Backlinks</span> From High-Quality Websites
+        </h3>
+        <h4 className="text-lg md:text-xl lg:text-2xl mb-6">
+          Only Pay If You Are Satisfied With The Results
+        </h4>
         <div className="space-x-4 flex justify-center">
           <a 
             href="/register-1" 
@@ -26,7 +33,9 @@ export default function HeroSection() {
             <FaTag /> View Pricing
           </a>
         </div>
-        <p className="mt-4 text-sm">Starting From <span className="font-bold text-yellow-400">$4.99</span></p>
+        <p className="mt-4 text-sm md:text-base lg:text-lg">
+          Starting From <span className="font-bold text-yellow-400">$4.99</span>
+        </p>
       </div>
       <StatsSection />
     </section>
