@@ -7,9 +7,9 @@ const AuthForm = () => {
     const toggleForm = () => setIsLogin(!isLogin);
 
     return (
-        <div className="flex items-center justify-center min-h-screen ">
-            <div className="bg-white shadow-lg rounded-lg flex max-w-4xl w-full">
-                <div className="bg-blue-500 text-white p-8 rounded-l-lg flex flex-col justify-between w-1/4">
+        <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white shadow-lg rounded-lg flex flex-col md:flex-row max-w-4xl w-full">
+                <div className="bg-blue-500 text-white p-8 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex flex-col justify-between w-full md:w-1/4 text-center md:text-left">
                     <div>
                         <h1 className="text-3xl font-bold mb-4">iCopify</h1>
                         <p className="mb-8">Never Pay Until You're 100% Satisfied - Increasing traffic, leads and sales.</p>
@@ -21,7 +21,7 @@ const AuthForm = () => {
                         </button>
                     </div>
                 </div>
-                <div className="p-8 w-3/4 flex flex-col justify-center h-full">
+                <div className="p-8 w-full md:w-3/4 flex flex-col justify-center h-full">
                     <h2 className="text-3xl font-bold mb-4">{isLogin ? "Log in" : "Create New Account"}</h2>
                     <form>
                         <div className="mb-4">
@@ -35,9 +35,7 @@ const AuthForm = () => {
                                 <input className="w-full p-3 border rounded" placeholder="Name" type="text" required />
                             </div>
                         )}
-                        <button className="w-full bg-blue-500 text-white py-3 rounded mb-4 hover:bg-blue-600 transition-colors" type="submit">
-                            {isLogin ? "Log in" : "Create An Account"}
-                        </button>
+                        
                         {!isLogin && (
                             <div className="flex items-start">
                                 <input className="mr-2 mt-1" type="checkbox" required />
@@ -50,13 +48,15 @@ const AuthForm = () => {
                                 </p>
                             </div>
                         )}
-                    {isLogin && (<div className="flex justify-between items-center mb-4">
-    <label className="flex items-center">
-        <input className="mr-2" type="checkbox" />
-        Remember me
-    </label>
-    <Link className="text-blue-500" href="#">Forgot Password?</Link>
+                    {isLogin && (
+<div className="mb-4 text-sm">
+<label className="flex items-center">
+<input className="mr-2" type="checkbox" />
+Remember me
+</label>
+<Link className="text-blue-500 ml-auto" href="#">Forgot Password?</Link>
 </div>)}
+<button className="w-full bg-blue-500 text-white py-3 rounded mb-4 hover:bg-blue-600 transition-colors" type="submit">{isLogin ? "Log in" : "Create An Account"}</button>
 </form>
                 </div>
             </div>
