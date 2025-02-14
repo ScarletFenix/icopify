@@ -1,16 +1,89 @@
-import { useState } from 'react';
-import Link from 'next/link';
+"use client";
+import { useState } from "react";
+import axios from "axios";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const AuthForm = () => {
+    const router = useRouter();
     const [isLogin, setIsLogin] = useState(false);
+    const [identifier, setIdentifier] = useState("");
+    const [password, setPassword] = useState("");
+    const [name, setName] = useState("");
+    const [touched, setTouched] = useState({ name: false, email: false, password: false });
 
-    const toggleForm = () => setIsLogin(!isLogin);
+    // Email Validation
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    // Password Validation: Min 6 chars, 1 uppercase, 1 special character
+    const validatePassword = (pass) => {
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+        return passwordRegex.test(pass);
+    };
+
+    // Name Length Validation
+    const validateNameLength = (name) => {
+        return name.length >= 3 && name.length <= 20;
+    };
+
+    const handleBlur = (field) => {
+        setTouched({ ...touched, [field]: true });
+    };
+
+    const isFormValid = () => {
+        if (isLogin) {
+            return validateEmail(identifier) && validatePassword(password);
+        }
+        return (
+            validateNameLength(name) &&
+            validateEmail(identifier) &&
+            validatePassword(password)
+        );
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (isLogin) {
+            try {
+                const res = await axios.post(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/auth/local`, {
+                    identifier,
+                    password,
+                });
+
+                // Store Token and User Info
+                localStorage.setItem("token", res.data.jwt);
+                localStorage.setItem("user", JSON.stringify(res.data.user));
+
+                toast.success("Login successful!");
+                setTimeout(() => {
+                    router.push("/dashboard");
+                }, 1500);
+            } catch (err) {
+                toast.error("Invalid login credentials.");
+            }
+        } else {
+            try {
+                await axios.post(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/auth/local/register`, {
+                    username: name,
+                    email: identifier,
+                    password,
+                });
+                toast.success("Registration successful!");
+                setTimeout(() => setIsLogin(true), 2000); // Redirect to login form
+            } catch (err) {
+                toast.error("Registration failed.");
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 w-full overflow-hidden">
-            {/* Form Container */}
             <div className="relative bg-white shadow-lg rounded-lg flex flex-col md:flex-row max-w-4xl w-full overflow-hidden">
-                {/* Left Side - Branding and Toggle Button */}
                 <div className="bg-blue-500 text-white p-8 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex flex-col justify-center items-center w-full md:w-1/3 text-center">
                     <div>
                         <h1 className="text-3xl font-bold mb-4">iCopify</h1>
@@ -18,60 +91,66 @@ const AuthForm = () => {
                     </div>
                     <div>
                         <p className="mb-4">{isLogin ? "Don't have an account?" : "Have an account?"}</p>
-                        <button onClick={toggleForm} className="bg-transparent border border-white text-white py-2 px-4 rounded hover:bg-white hover:text-blue-500 transition-colors">
+                        <button onClick={() => setIsLogin(!isLogin)} className="bg-transparent border border-white text-white py-2 px-4 rounded hover:bg-white hover:text-blue-500 transition-colors">
                             {isLogin ? "Sign Up" : "Log In"}
                         </button>
                     </div>
                 </div>
 
-                {/* Right Side - Form */}
                 <div className="relative p-8 w-full md:w-2/3 flex flex-col justify-center h-full max-w-md mx-auto overflow-hidden">
-                    {/* Circle Backgrounds inside White Form Section */}
-                    <div className="absolute -top-10 -right-10 h-32 w-32 border-4 border-blue-400 rounded-full opacity-70 z-0"></div>
-                    <div className="absolute -bottom-10 -left-10 h-24 w-24 border-4 border-blue-300 rounded-full opacity-70 z-0"></div>
-
                     <div className="relative z-10">
                         <h2 className="text-3xl font-bold mb-4 text-center">{isLogin ? "Log In" : "Create New Account"}</h2>
-                        <form>
+                        <form onSubmit={handleSubmit}>
                             {!isLogin && (
                                 <div className="mb-4">
-                                    <input className="w-full p-3 border rounded" placeholder="Name" type="text" required />
+                                    <input
+                                        className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Name"
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        onBlur={() => handleBlur("name")}
+                                        required
+                                    />
+                                    {touched.name && !validateNameLength(name) && (
+                                        <p className="text-red-500 text-sm mt-1">Name must be 3-20 characters long.</p>
+                                    )}
                                 </div>
                             )}
                             <div className="mb-4">
-                                <input className="w-full p-3 border rounded" placeholder="Email address" type="email" required />
+                                <input
+                                    className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder={isLogin ? "Username or Email" : "Email"}
+                                    type="text"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                    onBlur={() => handleBlur("email")}
+                                    required
+                                />
                             </div>
                             <div className="mb-4">
-                                <input className="w-full p-3 border rounded pr-10" placeholder="Enter your password" type="password" required />
+                                <input
+                                    className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Enter your password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    onBlur={() => handleBlur("password")}
+                                    required
+                                />
                             </div>
-                            {!isLogin && (
-                                <div className="flex items-start mb-4">
-                                    <input className="mr-2 mt-1" type="checkbox" required />
-                                    <p className="text-sm">
-                                        By creating an account, you agree to the iCopify
-                                        <Link className="text-blue-500" href="#"> Terms of Service</Link>
-                                        and to occasionally receive marketing emails from us. Please read our
-                                        <Link className="text-blue-500" href="#"> Privacy Policy</Link>
-                                        to learn how we use your personal data.
-                                    </p>
-                                </div>
-                            )}
-                            {isLogin && (
-                                <div className="mb-4 text-sm flex justify-between items-center">
-                                    <label className="flex items-center">
-                                        <input className="mr-2" type="checkbox" />
-                                        Remember me
-                                    </label>
-                                    <Link className="text-blue-500" href="#">Forgot Password?</Link>
-                                </div>
-                            )}
-                            <button className="w-full bg-blue-500 text-white py-3 rounded mb-4 hover:bg-blue-600 transition-colors" type="submit">
+                            <button
+                                className={`w-full text-white py-3 rounded mb-4 transition-colors ${isFormValid() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`}
+                                type="submit"
+                                disabled={!isFormValid()}
+                            >
                                 {isLogin ? "Log In" : "Create Account"}
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
         </div>
     );
 };
