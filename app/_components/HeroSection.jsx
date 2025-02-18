@@ -1,8 +1,18 @@
 "use client";
+import { useEffect, useState } from "react";
 import StatsSection from './StatsSection';
-import { FaUserPlus, FaTag } from 'react-icons/fa';
+import { FaUserPlus, FaTag, FaTachometerAlt } from 'react-icons/fa';
 
 export default function HeroSection() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
     <section 
       className="relative h-screen flex flex-col items-center justify-center bg-cover bg-center" 
@@ -19,13 +29,23 @@ export default function HeroSection() {
           Only Pay If You Are Satisfied With The Results
         </h4>
         <div className="space-x-4 flex justify-center">
-          <a 
-            href="/register-1" 
-            className="bg-white text-black px-6 py-3 rounded-lg font-semibold flex items-center gap-2 relative overflow-hidden transition-all duration-300 hover:bg-yellow-400 hover:text-dark shadow-lg hover:shadow-yellow-400/50"
-            style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
-          >
-            <FaUserPlus /> Sign Up Now
-          </a>
+          {isLoggedIn ? (
+            <a 
+              href="/dashboard" 
+              className="bg-white text-black px-6 py-3 rounded-lg font-semibold flex items-center gap-2 relative overflow-hidden transition-all duration-300 hover:bg-yellow-400 hover:text-dark shadow-lg hover:shadow-yellow-400/50"
+              style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+            >
+              <FaTachometerAlt /> Dashboard
+            </a>
+          ) : (
+            <a 
+              href="/register-1" 
+              className="bg-white text-black px-6 py-3 rounded-lg font-semibold flex items-center gap-2 relative overflow-hidden transition-all duration-300 hover:bg-yellow-400 hover:text-dark shadow-lg hover:shadow-yellow-400/50"
+              style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+            >
+              <FaUserPlus /> Sign Up Now
+            </a>
+          )}
           <a 
             href="#viewPricing" 
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/50"

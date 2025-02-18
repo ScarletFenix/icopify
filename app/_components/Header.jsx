@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +17,13 @@ export default function Header() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setIsLoggedIn(true);
+    }
   }, []);
 
   return (
@@ -72,12 +80,20 @@ export default function Header() {
           >
             Content Writing
           </a>
-          <a href="/login" className="text-white hover:text-orange-400">
-            Login
-          </a>
-          <a href="/register-1" className="text-white hover:text-orange-400">
-            Sign Up
-          </a>
+          {isLoggedIn ? (
+            <a href="/dashboard" className="text-white hover:text-orange-400">
+              Dashboard
+            </a>
+          ) : (
+            <>
+              <a href="/login" className="text-white hover:text-orange-400">
+                Login
+              </a>
+              <a href="/register-1" className="text-white hover:text-orange-400">
+                Sign Up
+              </a>
+            </>
+          )}
         </div>
       </div>
       {isOpen && (
@@ -94,12 +110,20 @@ export default function Header() {
           <a href="/content-writing" className="hover:text-orange-400">
             Content Writing
           </a>
-          <a href="/login" className="hover:text-orange-400">
-            Login
-          </a>
-          <a href="/register-1" className="hover:text-orange-400">
-            Sign Up
-          </a>
+          {isLoggedIn ? (
+            <a href="/dashboard" className="hover:text-orange-400">
+              Dashboard
+            </a>
+          ) : (
+            <>
+              <a href="/login" className="hover:text-orange-400">
+                Login
+              </a>
+              <a href="/register-1" className="hover:text-orange-400">
+                Sign Up
+              </a>
+            </>
+          )}
         </div>
       )}
     </nav>

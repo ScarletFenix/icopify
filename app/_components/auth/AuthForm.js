@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Eye, EyeOff } from "lucide-react";
+import axios from "axios"; // Ensure axios is installed
 
 // Reusable InputField Component
 const InputField = ({ label, type, value, onChange, onBlur, error, placeholder, showPasswordToggle }) => {
@@ -86,19 +86,24 @@ const AuthForm = () => {
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [touched, setTouched] = useState({ name: false, email: false, password: false });
-    const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState({ name: "", email: "", password: "", captcha: "" });
     const [showPassword, setShowPassword] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [captchaAnswer, setCaptchaAnswer] = useState("");
-    const [captchaQuestion] = useState(generateCaptchaQuestion());
+    const [captchaQuestion, setCaptchaQuestion] = useState("");
+    const [captchaSolution, setCaptchaSolution] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Generate a simple CAPTCHA question
-    function generateCaptchaQuestion() {
-        const num1 = Math.floor(Math.random() * 10);
-        const num2 = Math.floor(Math.random() * 10);
-        return { question: `${num1} + ${num2}`, answer: num1 + num2 };
-    }
+    useEffect(() => {
+        const generateCaptchaQuestion = () => {
+            const num1 = Math.floor(Math.random() * 10);
+            const num2 = Math.floor(Math.random() * 10);
+            setCaptchaQuestion(`${num1} + ${num2}`);
+            setCaptchaSolution(num1 + num2);
+        };
+        generateCaptchaQuestion();
+    }, []);
 
     // Validation functions
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -146,32 +151,32 @@ const AuthForm = () => {
             validateEmail(identifier) &&
             validatePassword(password) &&
             acceptTerms &&
-            parseInt(captchaAnswer) === captchaQuestion.answer
+            parseInt(captchaAnswer) === captchaSolution
         );
     };
 
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         validateField("name");
         validateField("email");
         validateField("password");
-
+    
         if (!isFormValid()) {
             if (!acceptTerms) {
                 toast.error("Please accept the terms and conditions.");
             }
-            if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
+            if (parseInt(captchaAnswer) !== captchaSolution) {
                 toast.error("CAPTCHA answer is incorrect.");
             }
             return;
         }
-
+    
         setIsLoading(true);
         const endpoint = isLogin ? "/api/auth/local" : "/api/auth/local/register";
         const payload = isLogin ? { identifier, password } : { username: name, email: identifier, password };
-
+    
         try {
             const res = await axios.post(`${process.env.NEXT_PUBLIC_STRAPI_URL}${endpoint}`, payload);
             if (isLogin) {
@@ -183,6 +188,15 @@ const AuthForm = () => {
                 toast.success("Registration successful!");
                 setTimeout(() => setIsLogin(true), 2000);
             }
+    
+            // Clear form fields
+            setIdentifier("");
+            setPassword("");
+            setName("");
+            setCaptchaAnswer("");
+            setAcceptTerms(false);
+            setErrors({ name: "", email: "", password: "", captcha: "" });
+            setTouched({ name: false, email: false, password: false });
         } catch (err) {
             if (err.response?.data?.error) {
                 const errorMessage = err.response.data.error.message.toLowerCase();
@@ -196,6 +210,11 @@ const AuthForm = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Handle Google login
+    const handleGoogleLogin = () => {
+        window.location.href = "/api/auth/login?connection=google-oauth2";
     };
 
     return (
@@ -258,7 +277,7 @@ const AuthForm = () => {
                                     onChange={(e) => setAcceptTerms(e.target.checked)}
                                 />
                                 <Captcha
-                                    question={captchaQuestion.question}
+                                    question={captchaQuestion}
                                     answer={captchaAnswer}
                                     onChange={(e) => setCaptchaAnswer(e.target.value)}
                                     error={errors.captcha}
@@ -273,6 +292,12 @@ const AuthForm = () => {
                             {isLoading ? "Processing..." : isLogin ? "Log In" : "Create Account"}
                         </button>
                     </form>
+                    <button
+                        onClick={handleGoogleLogin}
+                        className="w-full bg-blue-500 text-white py-2 px-4 rounded mt-4 hover:bg-blue-600 transition-colors"
+                    >
+                        Log In with Google
+                    </button>
                 </div>
             </div>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
