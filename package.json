@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.0.1",
+    "@headlessui/react": "^2.2.0",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-separator": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.2",
@@ -27,6 +28,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0",
     "react-toastify": "^11.0.3",
+    "react-tooltip": "^5.28.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
   },

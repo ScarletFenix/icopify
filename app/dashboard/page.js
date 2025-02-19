@@ -1,8 +1,23 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { FaTachometerAlt, FaUser, FaSignOutAlt, FaStar, FaTasks } from 'react-icons/fa';
+import { 
+    FaTachometerAlt, 
+    FaUser, 
+    FaSignOutAlt, 
+    FaStar, 
+    FaTasks, 
+    FaUsers, 
+    FaLink, 
+    FaBriefcase, 
+    FaColumns, 
+    FaQuestionCircle, 
+    FaWallet, 
+    FaUserClock, 
+    FaUsers as FaUsersIcon 
+} from 'react-icons/fa';
 import { FiMenu } from 'react-icons/fi';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -11,7 +26,7 @@ export default function DashboardPage() {
     const [activeContent, setActiveContent] = useState("Dashboard");
     const [isMounted, setIsMounted] = useState(false);
     const dropdownRef = useRef(null);
-    const [user, setUser] = useState({ username: "User", email: "user@example.com" });
+    const [user, setUser] = useState({ id: "12345", username: "User", email: "user@example.com", role: "buyer" });
 
     useEffect(() => {
         setIsMounted(true);
@@ -19,7 +34,40 @@ export default function DashboardPage() {
         if (storedUser) {
             setUser(storedUser);
         }
+
+        // Refresh token every 1 hour
+        const interval = setInterval(() => {
+            refreshToken();
+        }, 60 * 60 * 1000); // 1 hour
+
+        return () => clearInterval(interval);
     }, []);
+
+    const refreshToken = async () => {
+        try {
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (!refreshToken) {
+                handleLogout();
+                return;
+            }
+
+            const response = await fetch("/api/auth/refresh", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("jwt", data.jwt);
+            } else {
+                handleLogout();
+            }
+        } catch (error) {
+            console.error("Error refreshing token:", error);
+            handleLogout();
+        }
+    };
 
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
@@ -30,15 +78,21 @@ export default function DashboardPage() {
     };
 
     const handleLogout = () => {
-        if (typeof window !== "undefined") {
-            localStorage.removeItem("jwt");
-            localStorage.removeItem("user");
-            router.push("/login");
-        }
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        router.push("/login");
     };
 
     const handleNavClick = (content) => {
         setActiveContent(content);
+    };
+
+    const toggleRole = () => {
+        const newRole = user.role === "buyer" ? "publisher" : "buyer";
+        const updatedUser = { ...user, role: newRole };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
     };
 
     useEffect(() => {
@@ -54,7 +108,32 @@ export default function DashboardPage() {
         };
     }, []);
 
-    if (!isMounted) return <div>Loading...</div>;
+    if (!isMounted) return (
+        <div className="min-h-screen flex items-center justify-center bg-[#EDF2F9]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
+    );
+
+    const buyerLinks = [
+        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" />, tooltip: "Dashboard" },
+        { name: "All My Projects", icon: <FaTasks className="w-6 h-6" />, tooltip: "All My Projects" },
+        { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "All Publishers" },
+        { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Link Insertions" },
+        { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Recommended Sites" },
+    ];
+
+    const publisherLinks = [
+        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" />, tooltip: "Dashboard" },
+        { name: "Open Offers", icon: <FaBriefcase className="w-6 h-6" />, tooltip: "Open Offers" },
+        { name: "Guest Post Tasks", icon: <FaTasks className="w-6 h-6" />, tooltip: "Guest Post Tasks" },
+        { name: "My Platform", icon: <FaColumns className="w-6 h-6" />, tooltip: "My Platform" },
+        { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" />, tooltip: "FAQ" },
+        { name: "Balance", icon: <FaWallet className="w-6 h-6" />, tooltip: "Balance" },
+        { name: "Activity Log", icon: <FaUserClock className="w-6 h-6" />, tooltip: "Activity Log" },
+        { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" />, tooltip: "Invite People" },
+    ];
+
+    const links = user.role === "buyer" ? buyerLinks : publisherLinks;
 
     return (
         <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
@@ -64,6 +143,7 @@ export default function DashboardPage() {
                     <button
                         onClick={toggleSidebar}
                         className="p-2 bg-[#1E293B] text-white hover:bg-[#334155] transition-all duration-300 hidden lg:block"
+                        aria-label="Toggle Sidebar"
                     >
                         <FiMenu className="w-6 h-6" />
                     </button>
@@ -75,6 +155,7 @@ export default function DashboardPage() {
                     <button
                         onClick={toggleDropdown}
                         className="w-10 h-10 rounded-full bg-[#334155] flex items-center justify-center text-white"
+                        aria-label="User Menu"
                     >
                         <span className="text-lg">{user.username.charAt(0)}</span>
                     </button>
@@ -83,10 +164,21 @@ export default function DashboardPage() {
                             <div className="px-4 py-2 border-b">
                                 <p className="font-semibold">Welcome, {user.username}</p>
                                 <p className="text-sm text-gray-600">{user.email}</p>
+                                <div className="flex items-center mt-2">
+                                    <span className="text-sm text-gray-600 mr-2">Role: {user.role}</span>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input type="checkbox" className="hidden" onChange={toggleRole} checked={user.role === "publisher"} />
+                                        <div className="relative">
+                                            <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
+                                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${user.role === "publisher" ? "transform translate-x-full bg-blue-600" : ""}`}></div>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                             <button
                                 onClick={() => handleNavClick("Profile")}
                                 className="w-full text-left px-4 py-2 hover:bg-gray-200 flex items-center space-x-2"
+                                aria-label="Profile"
                             >
                                 <FaUser className="w-4 h-4" />
                                 <span>Profile</span>
@@ -94,6 +186,7 @@ export default function DashboardPage() {
                             <button
                                 onClick={handleLogout}
                                 className="w-full text-left px-4 py-2 hover:bg-red-200 flex items-center space-x-2 text-red-600"
+                                aria-label="Logout"
                             >
                                 <FaSignOutAlt className="w-4 h-4" />
                                 <span>Logout</span>
@@ -103,45 +196,34 @@ export default function DashboardPage() {
                 </div>
             </nav>
 
-            {/* Second Navbar (Side Navbar) */}
+            {/* Sidebar Navigation */}
             <nav className={`bg-[#132238] text-white p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
                 <div className="border-t border-gray-600"></div>
                 <div className="flex flex-col space-y-4 mt-2">
-                    <button onClick={() => handleNavClick("Dashboard")} className="block p-2 hover:bg-[#334155] rounded flex items-center justify-center lg:justify-start lg:space-x-2 transition-all duration-300">
-                        <FaTachometerAlt className="w-5 h-5" />
-                        <span className={`transition-all duration-300 transform ${isSidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'} hidden lg:inline`}>Dashboard</span>
-                    </button>
-                    <button onClick={() => handleNavClick("All My Projects")} className="block p-2 hover:bg-[#334155] rounded flex items-center justify-center lg:justify-start lg:space-x-2 transition-all duration-300">
-                        <FaTasks className="w-5 h-5" />
-                        <span className={`transition-all duration-300 transform ${isSidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'} hidden lg:inline`}>All My Projects</span>
-                    </button>
-                    <button onClick={() => handleNavClick("All Publishers")} className="block p-2 hover:bg-[#334155] rounded flex items-center justify-center lg:justify-start lg:space-x-2 transition-all duration-300">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <span className={`transition-all duration-300 transform ${isSidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'} hidden lg:inline`}>All Publishers</span>
-                    </button>
-                    <button onClick={() => handleNavClick("Link Insertions")} className="block p-2 hover:bg-[#334155] rounded flex items-center justify-center lg:justify-start lg:space-x-2 transition-all duration-300">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                        </svg>
-                        <span className={`transition-all duration-300 transform ${isSidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'} hidden lg:inline`}>Link Insertions</span>
-                    </button>
-                    <button onClick={() => handleNavClick("Recommended Sites")} className="block p-2 hover:bg-[#334155] rounded flex items-center justify-center lg:justify-start lg:space-x-2 transition-all duration-300">
-                        <FaStar className="w-5 h-5" />
-                        <span className={`transition-all duration-300 transform ${isSidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'} hidden lg:inline`}>Recommended Sites</span>
-                    </button>
+                    {links.map((item) => (
+                        <button 
+                            key={item.name} 
+                            onClick={() => handleNavClick(item.name)}
+                            className="flex items-center w-full p-2 hover:bg-[#334155] rounded transition-all duration-300"
+                            data-tip={item.tooltip}
+                            aria-label={item.tooltip}
+                        >
+                            {/* Ensure Icons Always Visible */}
+                            <span className="w-10 flex justify-center">{item.icon}</span>
+                            
+                            {/* Show Text Only When Expanded */}
+                            <span className={`text-white transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
+                                {item.name}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </nav>
 
-            {/* Main Content Area */}
+            {/* Main Content */}
             <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300`}>
-                {/* Main Content */}
                 <main className="flex flex-col items-center justify-center space-y-4 p-4">
                     <h1 className="text-4xl font-bold text-[#1E293B]">{activeContent}</h1>
-                    {activeContent === "Welcome" && (
-                        <p className="text-[#475569]">Welcome to the Dashboard. Select an option from the navigation to see more details.</p>
-                    )}
                     {activeContent === "Profile" && (
                         <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
                             <h2 className="text-2xl font-bold mb-4 text-[#1E293B]">Profile</h2>
@@ -154,11 +236,24 @@ export default function DashboardPage() {
                                     <label className="block text-sm font-medium text-[#475569]">Email</label>
                                     <p className="mt-1 text-lg text-[#1E293B]">{user.email}</p>
                                 </div>
+                                <div>
+                                    <div className="flex items-center mt-1">
+                                        <span className="text-sm text-gray-600 mr-2">{user.role === "buyer" ? "Buyer" : "Publisher"}</span>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input type="checkbox" className="hidden" onChange={toggleRole} checked={user.role === "publisher"} />
+                                            <div className="relative">
+                                                <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
+                                                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${user.role === "publisher" ? "transform translate-x-full bg-blue-600" : ""}`}></div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
                 </main>
             </div>
+            <ReactTooltip place="right" type="dark" effect="solid" />
         </div>
     );
 }

@@ -1,57 +1,229 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { FaTachometerAlt, FaUser, FaSignOutAlt, FaStar, FaTasks, FaUsers, FaLink, FaBriefcase, FaColumns, FaQuestionCircle, FaWallet, FaUserClock, FaUsers as FaUsersIcon } from 'react-icons/fa';
+import { FiMenu } from 'react-icons/fi';
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+    const [activeContent, setActiveContent] = useState("Dashboard");
+    const [isMounted, setIsMounted] = useState(false);
+    const dropdownRef = useRef(null);
+    const [user, setUser] = useState({ id: "12345", username: "User", email: "user@example.com", role: "buyer" });
 
-    // useEffect(() => {
-    //     const token = localStorage.getItem("jwt");
+    useEffect(() => {
+        setIsMounted(true);
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (storedUser) {
+            setUser(storedUser);
+        }
 
-    //     if (!token) {
-    //         router.push("/login");
-    //     } else {
-    //         axios
-    //             .get(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/users/me`, {
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //             })
-    //             .then((res) => {
-    //                 if (res.data) {
-    //                     setIsAuthenticated(true);
-    //                     setLoading(false); // Stop loading once authenticated
-    //                 }
-    //             })
-    //             .catch((err) => {
-    //                 console.error("Authentication failed:", err);
-    //                 localStorage.removeItem("jwt");
-    //                 router.push("/login");
-    //             });
-    //     }
-    // }, [router]);
+        // Refresh token every 1 hour
+        const interval = setInterval(() => {
+            refreshToken();
+        }, 60 * 60 * 1000); // 1 hour
 
-    // const handleLogout = () => {
-    //     localStorage.removeItem("jwt");
-    //     router.push("/login");
-    // };
+        return () => clearInterval(interval);
+    }, []);
 
-    // if (loading) return <p>Loading...</p>;
+    const refreshToken = async () => {
+        try {
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (!refreshToken) {
+                handleLogout();
+                return;
+            }
 
-    // if (!isAuthenticated) return null;
+            const response = await fetch("/api/auth/refresh", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("jwt", data.jwt);
+            } else {
+                handleLogout();
+            }
+        } catch (error) {
+            console.error("Error refreshing token:", error);
+            handleLogout();
+        }
+    };
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen((prev) => !prev);
+    };
+
+    const toggleSidebar = () => {
+        setIsSidebarExpanded((prev) => !prev);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        router.push("/login");
+    };
+
+    const handleNavClick = (content) => {
+        setActiveContent(content);
+    };
+
+    const toggleRole = () => {
+        setUser((prevUser) => ({
+            ...prevUser,
+            role: prevUser.role === "buyer" ? "publisher" : "buyer",
+        }));
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    if (!isMounted) return <div>Loading...</div>;
+
+    const buyerLinks = [
+        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" /> },
+        { name: "All My Projects", icon: <FaTasks className="w-6 h-6" /> },
+        { name: "All Publishers", icon: <FaUsers className="w-6 h-6" /> },
+        { name: "Link Insertions", icon: <FaLink className="w-6 h-6" /> },
+        { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" /> },
+    ];
+
+    const publisherLinks = [
+        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" /> },
+        { name: "Open Offers", icon: <FaBriefcase className="w-6 h-6" /> },
+        { name: "Guest Post Tasks", icon: <FaTasks className="w-6 h-6" /> },
+        { name: "My Platform", icon: <FaColumns className="w-6 h-6" /> },
+        { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" /> },
+        { name: "Balance", icon: <FaWallet className="w-6 h-6" /> },
+        { name: "Activity Log", icon: <FaUserClock className="w-6 h-6" /> },
+        { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" /> },
+    ];
+
+    const links = user.role === "buyer" ? buyerLinks : publisherLinks;
 
     return (
-        <main className="min-h-screen flex flex-col items-center justify-center space-y-4">
-            <h1 className="text-4xl font-bold">Welcome to the Dashboard</h1>
-            <button
-                // onClick={handleLogout    }
-                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
-            >
-                Logout
-            </button>
-        </main>
+        <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
+            {/* First Navbar (Top Navbar) */}
+            <nav className="w-full bg-[#132238] text-white p-4 flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={toggleSidebar}
+                        className="p-2 bg-[#1E293B] text-white hover:bg-[#334155] transition-all duration-300 hidden lg:block"
+                    >
+                        <FiMenu className="w-6 h-6" />
+                    </button>
+                    <a href="/" className="text-white text-xl font-bold">
+                        <img src="/whitelogo1.webp" alt="Logo" className="h-12" />
+                    </a>
+                </div>
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={toggleDropdown}
+                        className="w-10 h-10 rounded-full bg-[#334155] flex items-center justify-center text-white"
+                    >
+                        <span className="text-lg">{user.username.charAt(0)}</span>
+                    </button>
+                    {isDropdownOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white shadow-md rounded-lg text-black">
+                            <div className="px-4 py-2 border-b">
+                                <p className="font-semibold">Welcome, {user.username}</p>
+                                <p className="text-sm text-gray-600">{user.email}</p>
+                                <p className="text-sm text-gray-600">ID: {user.id}</p>
+                                <div className="flex items-center mt-2">
+                                    <span className="text-sm text-gray-600 mr-2">Role: {user.role}</span>
+                                    <button
+                                        onClick={toggleRole}
+                                        className="bg-blue-600 text-white px-2 py-1 rounded text-sm transition-colors duration-300"
+                                    >
+                                        {user.role === "buyer" ? "Switch to Publisher" : "Switch to Buyer"}
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleNavClick("Profile")}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-200 flex items-center space-x-2"
+                            >
+                                <FaUser className="w-4 h-4" />
+                                <span>Profile</span>
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="w-full text-left px-4 py-2 hover:bg-red-200 flex items-center space-x-2 text-red-600"
+                            >
+                                <FaSignOutAlt className="w-4 h-4" />
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </nav>
+
+            {/* Sidebar Navigation */}
+            <nav className={`bg-[#132238] text-white p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
+                <div className="border-t border-gray-600"></div>
+                <div className="flex flex-col space-y-4 mt-2">
+                    {links.map((item) => (
+                        <button 
+                            key={item.name} 
+                            onClick={() => handleNavClick(item.name)}
+                            className="flex items-center w-full p-2 hover:bg-[#334155] rounded transition-all duration-300"
+                        >
+                            {/* Ensure Icons Always Visible */}
+                            <span className="w-10 flex justify-center">{item.icon}</span>
+                            
+                            {/* Show Text Only When Expanded */}
+                            <span className={`text-white transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
+                                {item.name}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300`}>
+                <main className="flex flex-col items-center justify-center space-y-4 p-4">
+                    <h1 className="text-4xl font-bold text-[#1E293B]">{activeContent}</h1>
+                    {activeContent === "Profile" && (
+                        <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
+                            <h2 className="text-2xl font-bold mb-4 text-[#1E293B]">Profile</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-[#475569]">Username</label>
+                                    <p className="mt-1 text-lg text-[#1E293B]">{user.username}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[#475569]">Email</label>
+                                    <p className="mt-1 text-lg text-[#1E293B]">{user.email}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[#475569]">ID</label>
+                                    <p className="mt-1 text-lg text-[#1E293B]">{user.id}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[#475569]">Role</label>
+                                    <p className="mt-1 text-lg text-[#1E293B]">{user.role}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </main>
+            </div>
+        </div>
     );
 }
