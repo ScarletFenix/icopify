@@ -24,8 +24,9 @@ import { PiUserList } from "react-icons/pi";
 import { FaSackDollar } from "react-icons/fa6";
 import { MdOutlineManageHistory } from "react-icons/md";
 import { FiMenu } from 'react-icons/fi';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
 import AddWebsiteForm from "../_components/publisher/AddWebsiteForm";
+
+import "../../styles/custom-scrollbar.css";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -44,6 +45,18 @@ export default function DashboardPage() {
             setUser(storedUser);
         }
 
+        // Set sidebar expanded state based on screen width
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIsSidebarExpanded(false);
+            } else {
+                setIsSidebarExpanded(true);
+            }
+        };
+
+        handleResize(); // Set initial state
+        window.addEventListener('resize', handleResize);
+
         // Refresh token every 1 hour
         const interval = setInterval(() => {
             refreshToken();
@@ -61,6 +74,7 @@ export default function DashboardPage() {
         window.addEventListener('scroll', handleScroll);
         return () => {
             clearInterval(interval);
+            window.removeEventListener('resize', handleResize);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
@@ -141,22 +155,22 @@ export default function DashboardPage() {
     );
 
     const buyerLinks = [
-        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Dashboard" },
-        { name: "All My Projects", icon: <GrTask className="w-6 h-6" />, tooltip: "All My Projects" },
-        { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "All Publishers" },
-        { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Link Insertions" },
-        { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Recommended Sites" },
+        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Overview of your projects and tasks" },
+        { name: "All My Projects", icon: <GrTask className="w-6 h-6" />, tooltip: "View and manage all your projects" },
+        { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "Explore and connect with publishers" },
+        { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Manage your link insertion tasks" },
+        { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Discover recommended sites for collaboration" },
     ];
 
     const publisherLinks = [
-        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Dashboard" },
-        { name: "Open Offers", icon: <RxRocket className="w-6 h-6" />, tooltip: "Open Offers" },
-        { name: "Guest Post Tasks", icon: <GrTask className="w-6 h-6" />, tooltip: "Guest Post Tasks" },
-        { name: "My Platform", icon: <PiUserList className="w-6 h-6" />, tooltip: "My Platform" },
-        { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" />, tooltip: "FAQ" },
-        { name: "Balance", icon: <FaSackDollar className="w-6 h-6" />, tooltip: "Balance" },
-        { name: "Activity Log", icon: <MdOutlineManageHistory className="w-6 h-6" />, tooltip: "Activity Log" },
-        { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" />, tooltip: "Invite People" },
+        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Your homepage" },
+        { name: "Open Offers", icon: <RxRocket className="w-6 h-6" />, tooltip: "Your offers" },
+        { name: "Guest Post Tasks", icon: <GrTask className="w-6 h-6" />, tooltip: "See all tasks" },
+        { name: "My Platform", icon: <PiUserList className="w-6 h-6" />, tooltip: "See your sites" },
+        { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" />, tooltip: "How topUrlz work" },
+        { name: "Balance", icon: <FaSackDollar className="w-6 h-6" />, tooltip: "See your invoices" },
+        { name: "Activity Log", icon: <MdOutlineManageHistory className="w-6 h-6" />, tooltip: "See your activity" },
+        { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" />, tooltip: "Earn commission" },
     ];
 
     const links = user.role === "buyer" ? buyerLinks : publisherLinks;
@@ -168,7 +182,7 @@ export default function DashboardPage() {
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={toggleSidebar}
-                        className="p-2 bg-[#] text-[#282828] hover:bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300 hidden lg:block"
+                        className="p-2 rounded-lg text-[#282828] hover:bg-gradient-to-r from-orange-300 to-red-300 transition-all duration-300 hidden lg:block"
                         aria-label="Toggle Sidebar"
                         aria-expanded={isSidebarExpanded}
                     >
@@ -181,7 +195,7 @@ export default function DashboardPage() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={toggleDropdown}
-                        className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-[#282828]"
+                        className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-300 to-red-300 flex items-center justify-center text-[#282828]"
                         aria-label="User Menu"
                     >
                         <span className="text-lg">{user.username.charAt(0)}</span>
@@ -224,29 +238,30 @@ export default function DashboardPage() {
             </nav>
 
             {/* Sidebar Navigation */}
-            <nav className={`bg-[#f5f5f5] text-[#282828] p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
+            <nav className={`bg-[#f5f5f5] text-[#282828] p-2 flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] z-10 transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'w-64' : 'w-16'} overflow-y-auto custom-scrollbar`}>
                 <div className="border-t border-gray-600"></div>
                 <div className="flex flex-col space-y-4 mt-2">
                     {links.map((item) => (
                         <button 
                             key={item.name} 
                             onClick={() => handleNavClick(item.name)}
-                            className={`flex items-center w-full p-2 rounded transition-all duration-300 group ${
+                            className={`flex flex-col rounded-lg items-center w-full p-2  transition-all duration-300 group ${
                                 activeContent === item.name
                                     ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
-                                    : "hover:bg-gradient-to-r from-orange-500 to-red-500"
+                                    : "hover:bg-gradient-to-r from-orange-300 to-red-300"
                             }`}
-                            data-tooltip-id="sidebar-tooltip"
-                            data-tooltip-content={item.tooltip}
                             aria-label={item.tooltip}
                         >
-                            {/* Ensure Icons Always Visible */}
-                            <span className="w-10 flex justify-center">{item.icon}</span>
-                            
-                            {/* Show Text Only When Expanded */}
-                            <span className={`text-[#282828] transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
-                                {item.name}
-                            </span>
+                            {/* Icon Row */}
+                            <div className="w-10 h-10 flex items-center justify-center">
+                                {item.icon}
+                            </div>
+
+                            {/* Link Name and Tooltip Row */}
+                            <div className={`text-center transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>
+                                <span className="text-sm font-medium">{item.name}</span>
+                                <p className={`text-xs mt-1 ${activeContent === item.name ? 'text-white' : 'text-[#282828]'}`}>{item.tooltip}</p>
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -288,17 +303,6 @@ export default function DashboardPage() {
                     )}
                 </main>
             </div>
-
-            {/* Tooltip */}
-            <ReactTooltip
-                id="sidebar-tooltip"
-                place="right"
-                type="dark"
-                effect="solid"
-                className="!bg-[#282828] !text-white !px-3 !py-2 !rounded-lg"
-                arrowColor="#282828"
-                delayShow={100} // Add a 300ms delay
-            />
 
             {/* Scroll-to-Top Button */}
             {showScrollButton && (

@@ -1,0 +1,19 @@
+/* Custom scrollbar styles with lighter tones */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Default state using lighter shades */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, #FDBA74, #FCA5A5); /* Lighter orange to red */
+    border-radius: 10px;
+}
+
+/* Hover state remains the same */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to right, #FDBA74, #FCA5A5);
+}
