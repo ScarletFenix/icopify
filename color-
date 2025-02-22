@@ -1,0 +1,60 @@
+#374151
+#4b5563
+yellow to orange gradient on hover nav + side bar
+
+<!-- side - Links text color -->
+#282828
+bold
+<!-- size 11.2 -->
+your home page
+yours offer
+see your sites
+gestpost --> see all tasks
+faq --> how topUrlz works
+balance --> see your invoices
+ativity --> see your activity
+invite --> earn commission
+
+<!-- bg-color -->
+whitesmoke
+ 
+ <!--hover-links color  -->
+orange to red gradient
+
+side - font 14px
+Warning color - #ef4444
+
+
+<!-- change dashboard icon -->
+import { TiHomeOutline } from "react-icons/ti";
+<!-- <TiHomeOutline /> -->
+
+<!--  offers icon -->
+import { RxRocket } from "react-icons/rx";
+<!-- <RxRocket /> -->
+
+
+<!-- Task -->
+import { GrTask } from "react-icons/gr";
+<!-- <GrTask /> -->
+
+<!-- platform -->
+import { PiUserList } from "react-icons/pi";
+<!-- <PiUserList /> -->
+
+FAQ --> flaticon -- not found
+
+
+<!-- balance -->
+import { FaSackDollar } from "react-icons/fa6";
+<!-- <FaSackDollar /> -->
+
+
+<!-- logs -->
+import { MdOutlineManageHistory } from "react-icons/md";
+<!-- <MdOutlineManageHistory /> -->
+
+<!-- invite -->
+https://www.flaticon.com/free-icon/affiliate-marketing_2907714?term=affiliate&page=1&position=86&origin=tag&related_id=
+
+

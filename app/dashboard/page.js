@@ -14,19 +14,28 @@ import {
     FaQuestionCircle, 
     FaWallet, 
     FaUserClock, 
-    FaUsers as FaUsersIcon 
+    FaUsers as FaUsersIcon,
+    FaArrowUp // For scroll-to-top button
 } from 'react-icons/fa';
+import { TiHomeOutline } from "react-icons/ti";
+import { RxRocket } from "react-icons/rx";
+import { GrTask } from "react-icons/gr";
+import { PiUserList } from "react-icons/pi";
+import { FaSackDollar } from "react-icons/fa6";
+import { MdOutlineManageHistory } from "react-icons/md";
 import { FiMenu } from 'react-icons/fi';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
+import AddWebsiteForm from "../_components/publisher/AddWebsiteForm";
 
 export default function DashboardPage() {
     const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // Set to true by default
     const [activeContent, setActiveContent] = useState("Dashboard");
     const [isMounted, setIsMounted] = useState(false);
     const dropdownRef = useRef(null);
     const [user, setUser] = useState({ id: "12345", username: "User", email: "user@example.com", role: "buyer" });
+    const [showScrollButton, setShowScrollButton] = useState(false); // For scroll-to-top button
 
     useEffect(() => {
         setIsMounted(true);
@@ -40,7 +49,20 @@ export default function DashboardPage() {
             refreshToken();
         }, 60 * 60 * 1000); // 1 hour
 
-        return () => clearInterval(interval);
+        // Scroll event listener for scroll-to-top button
+        const handleScroll = () => {
+            if (window.scrollY > 200) {
+                setShowScrollButton(true);
+            } else {
+                setShowScrollButton(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('scroll', handleScroll);
+        };
     }, []);
 
     const refreshToken = async () => {
@@ -108,28 +130,32 @@ export default function DashboardPage() {
         };
     }, []);
 
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     if (!isMounted) return (
         <div className="min-h-screen flex items-center justify-center bg-[#EDF2F9]">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
         </div>
     );
 
     const buyerLinks = [
-        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" />, tooltip: "Dashboard" },
-        { name: "All My Projects", icon: <FaTasks className="w-6 h-6" />, tooltip: "All My Projects" },
+        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Dashboard" },
+        { name: "All My Projects", icon: <GrTask className="w-6 h-6" />, tooltip: "All My Projects" },
         { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "All Publishers" },
         { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Link Insertions" },
         { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Recommended Sites" },
     ];
 
     const publisherLinks = [
-        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" />, tooltip: "Dashboard" },
-        { name: "Open Offers", icon: <FaBriefcase className="w-6 h-6" />, tooltip: "Open Offers" },
-        { name: "Guest Post Tasks", icon: <FaTasks className="w-6 h-6" />, tooltip: "Guest Post Tasks" },
-        { name: "My Platform", icon: <FaColumns className="w-6 h-6" />, tooltip: "My Platform" },
+        { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Dashboard" },
+        { name: "Open Offers", icon: <RxRocket className="w-6 h-6" />, tooltip: "Open Offers" },
+        { name: "Guest Post Tasks", icon: <GrTask className="w-6 h-6" />, tooltip: "Guest Post Tasks" },
+        { name: "My Platform", icon: <PiUserList className="w-6 h-6" />, tooltip: "My Platform" },
         { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" />, tooltip: "FAQ" },
-        { name: "Balance", icon: <FaWallet className="w-6 h-6" />, tooltip: "Balance" },
-        { name: "Activity Log", icon: <FaUserClock className="w-6 h-6" />, tooltip: "Activity Log" },
+        { name: "Balance", icon: <FaSackDollar className="w-6 h-6" />, tooltip: "Balance" },
+        { name: "Activity Log", icon: <MdOutlineManageHistory className="w-6 h-6" />, tooltip: "Activity Log" },
         { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" />, tooltip: "Invite People" },
     ];
 
@@ -138,23 +164,24 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
             {/* First Navbar (Top Navbar) */}
-            <nav className="w-full bg-[#132238] text-white p-4 flex justify-between items-center">
+            <nav className="w-full bg-[#f5f5f5] text-[#282828] p-4 flex fixed justify-between items-center">
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={toggleSidebar}
-                        className="p-2 bg-[#1E293B] text-white hover:bg-[#334155] transition-all duration-300 hidden lg:block"
+                        className="p-2 bg-[#] text-[#282828] hover:bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300 hidden lg:block"
                         aria-label="Toggle Sidebar"
+                        aria-expanded={isSidebarExpanded}
                     >
                         <FiMenu className="w-6 h-6" />
                     </button>
-                    <a href="/" className="text-white text-xl font-bold">
-                        <img src="/whitelogo1.webp" alt="Logo" className="h-12" />
+                    <a href="/" className="text-[#282828] text-xl font-bold">
+                        <img src="/whitel" alt="Logo" className="h-12" />
                     </a>
                 </div>
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={toggleDropdown}
-                        className="w-10 h-10 rounded-full bg-[#334155] flex items-center justify-center text-white"
+                        className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-[#282828]"
                         aria-label="User Menu"
                     >
                         <span className="text-lg">{user.username.charAt(0)}</span>
@@ -197,22 +224,27 @@ export default function DashboardPage() {
             </nav>
 
             {/* Sidebar Navigation */}
-            <nav className={`bg-[#132238] text-white p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
+            <nav className={`bg-[#f5f5f5] text-[#282828] p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
                 <div className="border-t border-gray-600"></div>
                 <div className="flex flex-col space-y-4 mt-2">
                     {links.map((item) => (
                         <button 
                             key={item.name} 
                             onClick={() => handleNavClick(item.name)}
-                            className="flex items-center w-full p-2 hover:bg-[#334155] rounded transition-all duration-300"
-                            data-tip={item.tooltip}
+                            className={`flex items-center w-full p-2 rounded transition-all duration-300 group ${
+                                activeContent === item.name
+                                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                                    : "hover:bg-gradient-to-r from-orange-500 to-red-500"
+                            }`}
+                            data-tooltip-id="sidebar-tooltip"
+                            data-tooltip-content={item.tooltip}
                             aria-label={item.tooltip}
                         >
                             {/* Ensure Icons Always Visible */}
                             <span className="w-10 flex justify-center">{item.icon}</span>
                             
                             {/* Show Text Only When Expanded */}
-                            <span className={`text-white transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
+                            <span className={`text-[#282828] transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
                                 {item.name}
                             </span>
                         </button>
@@ -221,12 +253,10 @@ export default function DashboardPage() {
             </nav>
 
             {/* Main Content */}
-            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300`}>
-                <main className="flex flex-col items-center justify-center space-y-4 p-4">
-                    <h1 className="text-4xl font-bold text-[#1E293B]">{activeContent}</h1>
+            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300 overflow-y-auto`}>
+                <main className="flex flex-col items-center justify-start space-y-4 p-4 w-full h-full">
                     {activeContent === "Profile" && (
                         <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-2xl font-bold mb-4 text-[#1E293B]">Profile</h2>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[#475569]">Username</label>
@@ -251,9 +281,35 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     )}
+                    {activeContent === "My Platform" && (
+                        <div className="w-full h-full bg-white p-6 mt-0 rounded-md shadow-md">
+                            <AddWebsiteForm />
+                        </div>
+                    )}
                 </main>
             </div>
-            <ReactTooltip place="right" type="dark" effect="solid" />
+
+            {/* Tooltip */}
+            <ReactTooltip
+                id="sidebar-tooltip"
+                place="right"
+                type="dark"
+                effect="solid"
+                className="!bg-[#282828] !text-white !px-3 !py-2 !rounded-lg"
+                arrowColor="#282828"
+                delayShow={100} // Add a 300ms delay
+            />
+
+            {/* Scroll-to-Top Button */}
+            {showScrollButton && (
+                <button
+                    onClick={scrollToTop}
+                    className="fixed bottom-4 right-4 p-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-lg hover:opacity-90"
+                    aria-label="Scroll to Top"
+                >
+                    <FaArrowUp className="w-6 h-6" />
+                </button>
+            )}
         </div>
     );
 }
