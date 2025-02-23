@@ -1,35 +1,29 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { 
-    FaTachometerAlt, 
-    FaUser, 
-    FaSignOutAlt, 
-    FaStar, 
-    FaTasks, 
-    FaUsers, 
-    FaLink, 
-    FaBriefcase, 
-    FaColumns, 
-    FaQuestionCircle, 
-    FaWallet, 
-    FaUserClock, 
+import {
+    FaUser,
+    FaSignOutAlt,
+    FaStar,
+    FaUsers,
+    FaLink,
+    FaQuestionCircle,
     FaUsers as FaUsersIcon,
-    FaArrowUp // For scroll-to-top button
-} from 'react-icons/fa';
+    FaArrowUp, // For scroll-to-top button
+} from "react-icons/fa";
 import { TiHomeOutline } from "react-icons/ti";
 import { RxRocket } from "react-icons/rx";
 import { GrTask } from "react-icons/gr";
 import { PiUserList } from "react-icons/pi";
 import { FaSackDollar } from "react-icons/fa6";
 import { MdOutlineManageHistory } from "react-icons/md";
-import { FiMenu } from 'react-icons/fi';
+import { FiMenu } from "react-icons/fi";
 import AddWebsiteForm from "../_components/publisher/AddWebsiteForm";
+import DashboardStats from "../_components/publisher/DashboardStats"; // Import DashboardStats component
+import Profile from "../_components/modals/Profile"; // Import Profile component
 
 import "../../styles/custom-scrollbar.css";
 
 export default function DashboardPage() {
-    const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // Set to true by default
     const [activeContent, setActiveContent] = useState("Dashboard");
@@ -79,6 +73,15 @@ export default function DashboardPage() {
         };
     }, []);
 
+    useEffect(() => {
+        // Set active content based on URL
+        const query = new URLSearchParams(window.location.search);
+        const content = query.get("content");
+        if (content) {
+            setActiveContent(content);
+        }
+    }, []);
+
     const refreshToken = async () => {
         try {
             const refreshToken = localStorage.getItem("refreshToken");
@@ -117,11 +120,14 @@ export default function DashboardPage() {
         localStorage.removeItem("jwt");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
-        router.push("/login");
+        window.location.href = "/login";
     };
 
     const handleNavClick = (content) => {
         setActiveContent(content);
+        if (content !== "Dashboard") {
+            window.history.pushState(null, "", `/dashboard?content=${content}`);
+        }
     };
 
     const toggleRole = () => {
@@ -178,7 +184,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
             {/* First Navbar (Top Navbar) */}
-            <nav className="w-full bg-[#f5f5f5] text-[#282828] p-4 flex fixed justify-between items-center">
+            <nav className="w-full bg-[#f5f5f5] text-[#282828] p-4 flex fixed justify-between items-center shadow-md">
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={toggleSidebar}
@@ -270,31 +276,13 @@ export default function DashboardPage() {
             {/* Main Content */}
             <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300 overflow-y-auto`}>
                 <main className="flex flex-col items-center justify-start space-y-4 p-4 w-full h-full">
-                    {activeContent === "Profile" && (
-                        <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">Username</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.username}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">Email</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.email}</p>
-                                </div>
-                                <div>
-                                    <div className="flex items-center mt-1">
-                                        <span className="text-sm text-gray-600 mr-2">{user.role === "buyer" ? "Buyer" : "Publisher"}</span>
-                                        <label className="flex items-center cursor-pointer">
-                                            <input type="checkbox" className="hidden" onChange={toggleRole} checked={user.role === "publisher"} />
-                                            <div className="relative">
-                                                <div className="block bg-gray-600 w-10 h-6 rounded-full"></div>
-                                                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${user.role === "publisher" ? "transform translate-x-full bg-blue-600" : ""}`}></div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                    {activeContent === "Dashboard" && user.role === "publisher" && (
+                        <div className="w-full h-full mt-1 rounded-lg shadow-md">
+                            <DashboardStats />
                         </div>
+                    )}
+                    {activeContent === "Profile" && (
+                        <Profile user={user} toggleRole={toggleRole} />
                     )}
                     {activeContent === "My Platform" && (
                         <div className="w-full h-full bg-white p-6 mt-0 rounded-md shadow-md">
