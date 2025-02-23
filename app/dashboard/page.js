@@ -184,7 +184,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
             {/* First Navbar (Top Navbar) */}
-            <nav className="w-full bg-[#f5f5f5] text-[#282828] p-4 flex fixed justify-between items-center shadow-md">
+            <nav className="w-full bg-[#f5f5f5] text-[#282828] p-4 flex fixed justify-between items-center shadow-md z-20">
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={toggleSidebar}
@@ -274,7 +274,7 @@ export default function DashboardPage() {
             </nav>
 
             {/* Main Content */}
-            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300 overflow-y-auto`}>
+            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300 overflow-y-auto z-0`}>
                 <main className="flex flex-col items-center justify-start space-y-4 p-4 w-full h-full">
                     {activeContent === "Dashboard" && user.role === "publisher" && (
                         <div className="w-full h-full mt-1 rounded-lg shadow-md">

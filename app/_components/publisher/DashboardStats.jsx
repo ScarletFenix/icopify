@@ -52,7 +52,7 @@ const DashboardStats = ({ accountBalance, chartData, cardData }) => {
   };
 
   return (
-    <div className="bg-gray-100 flex flex-col justify-center items-center w-full">
+    <div className="bg-gray-100 flex flex-col justify-center items-center w-full mt-16 overflow-y-auto z-10">
       {/* Cards Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full p-4">
         {(cardData || defaultCardData).map((card, index) => (
@@ -94,4 +94,4 @@ const DashboardStats = ({ accountBalance, chartData, cardData }) => {
   );
 };
 
-export default DashboardStats;  
+export default DashboardStats;
