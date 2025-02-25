@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
+import Head from "next/head";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,20 +13,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "icopify",
+  title: "TopUrlz",
   description: "Guest Posting Platform",
+  icons: {
+    icon: '/logoipsum-327.svg',
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children} 
-        </body>
-      
+      <Head>
+        <meta name="description" content="Guest Posting Platform" />
+      </Head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children} 
+      </body>
     </html>
   );  
 }

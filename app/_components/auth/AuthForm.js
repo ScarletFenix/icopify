@@ -158,25 +158,28 @@ const AuthForm = () => {
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
+        // Validate fields
         validateField("name");
         validateField("email");
         validateField("password");
-    
+
         if (!isFormValid()) {
             if (!acceptTerms) {
                 toast.error("Please accept the terms and conditions.");
             }
-            if (parseInt(captchaAnswer) !== captchaSolution) {
+            if (!isLogin && parseInt(captchaAnswer) !== captchaSolution) {
                 toast.error("CAPTCHA answer is incorrect.");
             }
             return;
         }
-    
+
         setIsLoading(true);
         const endpoint = isLogin ? "/api/auth/local" : "/api/auth/local/register";
-        const payload = isLogin ? { identifier, password } : { username: name, email: identifier, password };
-    
+        const payload = isLogin
+            ? { identifier, password }
+            : { username: name, email: identifier, password };
+
         try {
             const res = await axios.post(`${process.env.NEXT_PUBLIC_STRAPI_URL}${endpoint}`, payload);
             if (isLogin) {
@@ -188,7 +191,7 @@ const AuthForm = () => {
                 toast.success("Registration successful!");
                 setTimeout(() => setIsLogin(true), 2000);
             }
-    
+
             // Clear form fields
             setIdentifier("");
             setPassword("");
@@ -200,21 +203,19 @@ const AuthForm = () => {
         } catch (err) {
             if (err.response?.data?.error) {
                 const errorMessage = err.response.data.error.message.toLowerCase();
-                if (errorMessage.includes("username") || errorMessage.includes("name")) {
+                if (errorMessage.includes("identifier") || errorMessage.includes("password")) {
+                    toast.error("Your email or password is incorrect.");
+                } else if (errorMessage.includes("username") || errorMessage.includes("name")) {
                     setErrors({ ...errors, name: "Username is already taken." });
-                }
-                if (errorMessage.includes("email")) {
+                } else if (errorMessage.includes("email")) {
                     setErrors({ ...errors, email: "Email is already registered." });
                 }
+            } else {
+                toast.error("An unexpected error occurred. Please try again.");
             }
         } finally {
             setIsLoading(false);
         }
-    };
-
-    // Handle Google login
-    const handleGoogleLogin = () => {
-        window.location.href = "/api/auth/login?connection=google-oauth2";
     };
 
     return (
@@ -292,12 +293,6 @@ const AuthForm = () => {
                             {isLoading ? "Processing..." : isLogin ? "Log In" : "Create Account"}
                         </button>
                     </form>
-                    <button
-                        onClick={handleGoogleLogin}
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded mt-4 hover:bg-blue-600 transition-colors"
-                    >
-                        Log In with Google
-                    </button>
                 </div>
             </div>
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar />

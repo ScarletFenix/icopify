@@ -29,15 +29,20 @@ export default function DashboardPage() {
     const [activeContent, setActiveContent] = useState("Dashboard");
     const [isMounted, setIsMounted] = useState(false);
     const dropdownRef = useRef(null);
-    const [user, setUser] = useState({ id: "12345", username: "User", email: "user@example.com", role: "buyer" });
+    const [user, setUser] = useState(null);
     const [showScrollButton, setShowScrollButton] = useState(false); // For scroll-to-top button
 
     useEffect(() => {
-        setIsMounted(true);
         const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (storedUser) {
-            setUser(storedUser);
+        const jwt = localStorage.getItem("jwt");
+
+        if (!storedUser || !jwt) {
+            window.location.href = "/login";
+            return;
         }
+
+        setUser(storedUser);
+        setIsMounted(true);
 
         // Set sidebar expanded state based on screen width
         const handleResize = () => {
@@ -195,7 +200,7 @@ export default function DashboardPage() {
                         <FiMenu className="w-6 h-6" />
                     </button>
                     <a href="/" className="text-[#282828] text-xl font-bold">
-                        <img src="/whitel" alt="Logo" className="h-12" />
+                        <img src="/logoipsum-327.svg" alt="Logo" className="h-12" />
                     </a>
                 </div>
                 <div className="relative" ref={dropdownRef}>
@@ -285,7 +290,7 @@ export default function DashboardPage() {
                         <Profile user={user} toggleRole={toggleRole} />
                     )}
                     {activeContent === "My Platform" && (
-                        <div className="w-full h-full bg-white p-6 mt-0 rounded-md shadow-md">
+                        <div className="w-full h-full bg-white p-6 mt-4 rounded-md shadow-md">
                             <AddWebsiteForm />
                         </div>
                     )}
