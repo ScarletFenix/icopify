@@ -1,229 +1,561 @@
-"use client";
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { FaTachometerAlt, FaUser, FaSignOutAlt, FaStar, FaTasks, FaUsers, FaLink, FaBriefcase, FaColumns, FaQuestionCircle, FaWallet, FaUserClock, FaUsers as FaUsersIcon } from 'react-icons/fa';
-import { FiMenu } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { FaPlus, FaTimesCircle, FaTimes } from 'react-icons/fa';
+import TermsAndConditions from '../modals/TermsAndConditions';
+import WebsiteStatus from '../modals/WebsiteStatus';
+import PublisherInstructions from '../modals/PublisherInstructions';
 
-export default function DashboardPage() {
-    const router = useRouter();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-    const [activeContent, setActiveContent] = useState("Dashboard");
-    const [isMounted, setIsMounted] = useState(false);
-    const dropdownRef = useRef(null);
-    const [user, setUser] = useState({ id: "12345", username: "User", email: "user@example.com", role: "buyer" });
+const AddWebsiteForm = () => {
+  const [formData, setFormData] = useState({
+    siteName: '',
+    url: '',
+    pricePerPost: '',
+    linkType: 'DoFollow',
+    maxLinksAllowed: '',
+    wordsLimitArticle: '',
+    contentPlacementPrice: '',
+    contentCreationPlacementPrice: '',
+    deliveryTime: '',
+    guestUrl: '',
+    specialRequirements: '',
+    categories: '', // Changed to string
+    mobileLanguage: '',
+    sponsoredContent: false,
+  });
 
-    useEffect(() => {
-        setIsMounted(true);
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (storedUser) {
-            setUser(storedUser);
-        }
+  const [showTncModal, setShowTncModal] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [showInitialForm, setShowInitialForm] = useState(false);
+  const [showFullForm, setShowFullForm] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoryInput, setCategoryInput] = useState(''); // For the input field
+  const [selectedCategories, setSelectedCategories] = useState([]); // For displaying selected categories
 
-        // Refresh token every 1 hour
-        const interval = setInterval(() => {
-            refreshToken();
-        }, 60 * 60 * 1000); // 1 hour
+  // Retrieve user ID from localStorage on component mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUserId(storedUser.id);
+      console.log('User ID from localStorage:', storedUser.id); // Debugging
+    } else {
+      console.error('No user found in localStorage'); // Debugging
+    }
+  }, []);
 
-        return () => clearInterval(interval);
-    }, []);
+  // Automatically hide the alert after 5 seconds
+  useEffect(() => {
+    if (showAlert) {
+      const timer = setTimeout(() => setShowAlert(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showAlert]);
 
-    const refreshToken = async () => {
-        try {
-            const refreshToken = localStorage.getItem("refreshToken");
-            if (!refreshToken) {
-                handleLogout();
-                return;
-            }
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
-            const response = await fetch("/api/auth/refresh", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken }),
-            });
+  const handleAddWebsiteClick = () => {
+    setShowTncModal(true);
+    setShowAlert(false);
+  };
 
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("jwt", data.jwt);
-            } else {
-                handleLogout();
-            }
-        } catch (error) {
-            console.error("Error refreshing token:", error);
-            handleLogout();
-        }
-    };
+  const handleAcceptTnc = () => {
+    setShowTncModal(false);
+    setShowInitialForm(true);
+  };
 
-    const toggleDropdown = () => {
-        setIsDropdownOpen((prev) => !prev);
-    };
+  const handleDeclineTnc = () => {
+    setShowTncModal(false);
+    setShowAlert(true);
+  };
 
-    const toggleSidebar = () => {
-        setIsSidebarExpanded((prev) => !prev);
-    };
+  const handleInitialSubmit = (e) => {
+    e.preventDefault();
+    if (formData.siteName && formData.url) {
+      setShowFullForm(true);
+    }
+  };
 
-    const handleLogout = () => {
-        localStorage.removeItem("jwt");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        router.push("/login");
-    };
+  const handleCategoryInputChange = (e) => {
+    setCategoryInput(e.target.value);
+  };
 
-    const handleNavClick = (content) => {
-        setActiveContent(content);
-    };
-
-    const toggleRole = () => {
-        setUser((prevUser) => ({
-            ...prevUser,
-            role: prevUser.role === "buyer" ? "publisher" : "buyer",
+  const handleAddCategory = (e) => {
+    if (e.key === 'Enter' && categoryInput.trim()) {
+      const newCategory = categoryInput.trim();
+      if (!selectedCategories.includes(newCategory)) {
+        setSelectedCategories((prev) => [...prev, newCategory]);
+        setFormData((prev) => ({
+          ...prev,
+          categories: [...prev.categories, newCategory].join(','), // Convert to string
         }));
+      }
+      setCategoryInput('');
+    }
+  };
+
+  const handleRemoveCategory = (category) => {
+    const updatedCategories = selectedCategories.filter((c) => c !== category);
+    setSelectedCategories(updatedCategories);
+    setFormData((prev) => ({
+      ...prev,
+      categories: updatedCategories.join(','), // Convert to string
+    }));
+  };
+
+  const validateFormData = () => {
+    const requiredFields = [
+      'siteName',
+      'url',
+      'pricePerPost',
+      'maxLinksAllowed',
+      'wordsLimitArticle',
+      'contentPlacementPrice',
+      'deliveryTime',
+      'guestUrl',
+      'specialRequirements',
+      'categories',
+      'mobileLanguage',
+    ];
+
+    for (const field of requiredFields) {
+      if (!formData[field] || (Array.isArray(formData[field]) && formData[field].length === 0)) {
+        alert(`Please fill in the ${field} field.`);
+        return false;
+      }
+    }
+
+    // Additional validation for specific fields
+    if (isNaN(formData.pricePerPost)) {
+      alert('Price per Post must be a number.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateFormData()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const token = localStorage.getItem('jwt');
+    console.log('JWT from localStorage:', token); // Debugging
+
+    if (!token) {
+      alert('You are not authorized. Please log in first.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!userId) {
+      alert('User ID is missing. Please log in again.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const payload = {
+      data: {
+        ...formData,
+        owner: userId, // Link the site to the logged-in user
+      },
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsDropdownOpen(false);
-            }
-        };
+    console.log('Payload being sent:', payload); // Debugging
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/sites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include the JWT for authentication
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!isMounted) return <div>Loading...</div>;
+      console.log('Response status:', res.status); // Debugging
 
-    const buyerLinks = [
-        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" /> },
-        { name: "All My Projects", icon: <FaTasks className="w-6 h-6" /> },
-        { name: "All Publishers", icon: <FaUsers className="w-6 h-6" /> },
-        { name: "Link Insertions", icon: <FaLink className="w-6 h-6" /> },
-        { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" /> },
-    ];
+      if (res.ok) {
+        alert('Website added successfully');
+        setFormData({
+          siteName: '',
+          url: '',
+          pricePerPost: '',
+          linkType: 'DoFollow',
+          maxLinksAllowed: '',
+          wordsLimitArticle: '',
+          contentPlacementPrice: '',
+          contentCreationPlacementPrice: '',
+          deliveryTime: '',
+          guestUrl: '',
+          specialRequirements: '',
+          categories: '', // Reset to empty string
+          mobileLanguage: '',
+          sponsoredContent: false,
+        });
+        setSelectedCategories([]); // Clear selected categories
+        setShowInitialForm(false);
+        setShowFullForm(false);
+      } else {
+        const errorData = await res.json();
+        console.error('Error response:', errorData); // Debugging
+        alert(`Failed to add website: ${errorData?.error?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Network Error:', error); // Debugging
+      alert('An error occurred while adding the website.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const publisherLinks = [
-        { name: "Dashboard", icon: <FaTachometerAlt className="w-6 h-6" /> },
-        { name: "Open Offers", icon: <FaBriefcase className="w-6 h-6" /> },
-        { name: "Guest Post Tasks", icon: <FaTasks className="w-6 h-6" /> },
-        { name: "My Platform", icon: <FaColumns className="w-6 h-6" /> },
-        { name: "FAQ", icon: <FaQuestionCircle className="w-6 h-6" /> },
-        { name: "Balance", icon: <FaWallet className="w-6 h-6" /> },
-        { name: "Activity Log", icon: <FaUserClock className="w-6 h-6" /> },
-        { name: "Invite People", icon: <FaUsersIcon className="w-6 h-6" /> },
-    ];
+  return (
+    <div className="w-full bg-white">
+      {/* Website Status Bar */}
+      <div className="px-4 py-2">
+        <WebsiteStatus />
+      </div>
 
-    const links = user.role === "buyer" ? buyerLinks : publisherLinks;
+      {/* Publisher Instructions (Drop-down) */}
+      <PublisherInstructions />
 
-    return (
-        <div className="min-h-screen flex flex-col bg-[#EDF2F9]">
-            {/* First Navbar (Top Navbar) */}
-            <nav className="w-full bg-[#132238] text-white p-4 flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={toggleSidebar}
-                        className="p-2 bg-[#1E293B] text-white hover:bg-[#334155] transition-all duration-300 hidden lg:block"
-                    >
-                        <FiMenu className="w-6 h-6" />
-                    </button>
-                    <a href="/" className="text-white text-xl font-bold">
-                        <img src="/whitelogo1.webp" alt="Logo" className="h-12" />
-                    </a>
-                </div>
-                <div className="relative" ref={dropdownRef}>
-                    <button
-                        onClick={toggleDropdown}
-                        className="w-10 h-10 rounded-full bg-[#334155] flex items-center justify-center text-white"
-                    >
-                        <span className="text-lg">{user.username.charAt(0)}</span>
-                    </button>
-                    {isDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white shadow-md rounded-lg text-black">
-                            <div className="px-4 py-2 border-b">
-                                <p className="font-semibold">Welcome, {user.username}</p>
-                                <p className="text-sm text-gray-600">{user.email}</p>
-                                <p className="text-sm text-gray-600">ID: {user.id}</p>
-                                <div className="flex items-center mt-2">
-                                    <span className="text-sm text-gray-600 mr-2">Role: {user.role}</span>
-                                    <button
-                                        onClick={toggleRole}
-                                        className="bg-blue-600 text-white px-2 py-1 rounded text-sm transition-colors duration-300"
-                                    >
-                                        {user.role === "buyer" ? "Switch to Publisher" : "Switch to Buyer"}
-                                    </button>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => handleNavClick("Profile")}
-                                className="w-full text-left px-4 py-2 hover:bg-gray-200 flex items-center space-x-2"
-                            >
-                                <FaUser className="w-4 h-4" />
-                                <span>Profile</span>
-                            </button>
-                            <button
-                                onClick={handleLogout}
-                                className="w-full text-left px-4 py-2 hover:bg-red-200 flex items-center space-x-2 text-red-600"
-                            >
-                                <FaSignOutAlt className="w-4 h-4" />
-                                <span>Logout</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </nav>
+      <div className="mt-3 w-full px-4">
+        {showAlert && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded mb-4 relative">
+            <p className="text-sm">
+              To add a website, you must accept our Terms &amp; Conditions.
+            </p>
+            <button
+              onClick={() => setShowAlert(false)}
+              className="absolute top-1 right-2 text-yellow-700 hover:text-yellow-900"
+            >
+              <FaTimesCircle />
+            </button>
+          </div>
+        )}
 
-            {/* Sidebar Navigation */}
-            <nav className={`bg-[#132238] text-white p-2 flex flex-col fixed left-0 top-16 h-full z-10 transition-all duration-300 ${isSidebarExpanded ? 'w-64' : 'w-16'}`}>
-                <div className="border-t border-gray-600"></div>
-                <div className="flex flex-col space-y-4 mt-2">
-                    {links.map((item) => (
-                        <button 
-                            key={item.name} 
-                            onClick={() => handleNavClick(item.name)}
-                            className="flex items-center w-full p-2 hover:bg-[#334155] rounded transition-all duration-300"
-                        >
-                            {/* Ensure Icons Always Visible */}
-                            <span className="w-10 flex justify-center">{item.icon}</span>
-                            
-                            {/* Show Text Only When Expanded */}
-                            <span className={`text-white transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100 ml-2' : 'opacity-0 hidden'}`}>
-                                {item.name}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </nav>
-
-            {/* Main Content */}
-            <div className={`flex-1 ${isSidebarExpanded ? 'pl-64' : 'pl-16'} mt-16 transition-all duration-300`}>
-                <main className="flex flex-col items-center justify-center space-y-4 p-4">
-                    <h1 className="text-4xl font-bold text-[#1E293B]">{activeContent}</h1>
-                    {activeContent === "Profile" && (
-                        <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-2xl font-bold mb-4 text-[#1E293B]">Profile</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">Username</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.username}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">Email</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.email}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">ID</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.id}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[#475569]">Role</label>
-                                    <p className="mt-1 text-lg text-[#1E293B]">{user.role}</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </main>
-            </div>
+        <div className="flex justify-end">
+          <Button
+            onClick={handleAddWebsiteClick}
+            className="bg-orange-500 hover:bg-gradient-to-r from-orange-500 to-red-500 text-[#282828] flex items-center space-x-2"
+          >
+            <FaPlus />
+            <span>Add New Website</span>
+          </Button>
         </div>
-    );
-}
+      </div>
+
+      {/* Terms & Conditions Modal */}
+      {showTncModal && (
+        <TermsAndConditions
+          onAccept={handleAcceptTnc}
+          onDecline={handleDeclineTnc}
+        />
+      )}
+
+      {/* Initial Form Popout */}
+      {showInitialForm && !showFullForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <Card className="w-full max-w-md rounded-lg shadow-lg">
+            <CardContent className="p-6">
+              <form onSubmit={handleInitialSubmit} className="grid gap-4">
+                <div>
+                  <label className="block text-sm font-medium">
+                    Site Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter site name"
+                    name="siteName"
+                    value={formData.siteName}
+                    onChange={handleChange}
+                    required
+                    className="text-sm h-10"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium">
+                    URL <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="https://example.com"
+                    name="url"
+                    value={formData.url}
+                    onChange={handleChange}
+                    required
+                    className="text-sm h-10"
+                  />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowInitialForm(false);
+                      setShowFullForm(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">Next</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Full Form Popout */}
+      {showFullForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <Card className="w-full max-w-5xl rounded-lg shadow-lg">
+            <CardContent className="p-6">
+              <form onSubmit={handleSubmit} className="grid gap-6">
+                {/* Row 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Price per Post <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                      <Input
+                        placeholder="0.00"
+                        type="number"
+                        step="0.01"
+                        name="pricePerPost"
+                        value={formData.pricePerPost}
+                        onChange={handleChange}
+                        required
+                        className="text-sm h-10 pl-8"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Max Links Allowed <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Enter number"
+                      type="number"
+                      name="maxLinksAllowed"
+                      value={formData.maxLinksAllowed}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Words Limit for an Article <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Enter word limit"
+                      type="number"
+                      name="wordsLimitArticle"
+                      value={formData.wordsLimitArticle}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10"
+                    />
+                  </div>
+                </div>
+                {/* Row 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Content Placement Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                      <Input
+                        placeholder="0.00"
+                        type="number"
+                        step="0.01"
+                        name="contentPlacementPrice"
+                        value={formData.contentPlacementPrice}
+                        onChange={handleChange}
+                        required
+                        className="text-sm h-10 pl-8"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Content Creation &amp; Placement Price
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
+                      <Input
+                        placeholder="0.00"
+                        type="number"
+                        step="0.01"
+                        name="contentCreationPlacementPrice"
+                        value={formData.contentCreationPlacementPrice}
+                        onChange={handleChange}
+                        className="text-sm h-10 pl-8"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Delivery Time <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="deliveryTime"
+                      value={formData.deliveryTime}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                    >
+                      <option value="">Select delivery time</option>
+                      <option value="1 to 2 days">1 to 2 days</option>
+                      <option value="2 to 3 days">2 to 3 days</option>
+                      <option value="3 to 5 days">3 to 5 days</option>
+                      <option value="1 week">1 week</option>
+                      <option value="2 weeks">2 weeks</option>
+                    </select>
+                  </div>
+                </div>
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Guest Post Example URL <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="https://example.com"
+                      name="guestUrl"
+                      value={formData.guestUrl}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Link Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="linkType"
+                      value={formData.linkType}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                    >
+                      <option value="DoFollow">DoFollow</option>
+                      <option value="NoFollow">NoFollow</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Mobile Language <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="mobileLanguage"
+                      value={formData.mobileLanguage}
+                      onChange={handleChange}
+                      required
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                    >
+                      <option value="">Select language</option>
+                      <option value="English">English</option>
+                      <option value="Spanish">Spanish</option>
+                      <option value="French">French</option>
+                      <option value="German">German</option>
+                    </select>
+                  </div>
+                </div>
+                {/* Row 4: Categories */}
+                <div>
+                  <label className="block text-sm font-medium">
+                    Select Categories (up to 3) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCategories.map((category) => (
+                      <div
+                        key={category}
+                        className="flex items-center bg-gray-200 rounded-full px-3 py-1 text-sm"
+                      >
+                        <span>{category}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(category)}
+                          className="ml-2 text-gray-600 hover:text-gray-900"
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <Input
+                    placeholder="Type and press Enter to add a category"
+                    value={categoryInput}
+                    onChange={handleCategoryInputChange}
+                    onKeyDown={handleAddCategory}
+                    className="text-sm h-10 mt-2"
+                  />
+                </div>
+                {/* Row 5: Special Requirements */}
+                <div>
+                  <label className="block text-sm font-medium">
+                    Special Requirements <span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    placeholder="Enter any special requirements..."
+                    name="specialRequirements"
+                    value={formData.specialRequirements}
+                    onChange={handleChange}
+                    required
+                    className="text-sm h-24"
+                  />
+                </div>
+                {/* Row 6: Sponsored Content */}
+                <div>
+                  <label className="block text-sm font-medium">
+                    Mark content as sponsored?
+                  </label>
+                  <input
+                    type="checkbox"
+                    name="sponsoredContent"
+                    checked={formData.sponsoredContent}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  <label className="text-sm">Yes</label>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowFullForm(false);
+                      setShowInitialForm(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Website'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AddWebsiteForm;
+

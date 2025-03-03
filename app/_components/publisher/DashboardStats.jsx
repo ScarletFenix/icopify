@@ -1,52 +1,66 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const DashboardStats = ({ accountBalance, chartData, cardData }) => {
+  // Random data for the graph
+  const randomData = Array.from({ length: 7 }, () => Math.floor(Math.random() * 5000));
+
   // Default chart data if not provided
   const defaultChartData = {
     labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
     datasets: [
       {
         label: 'Account Balance',
-        data: [1200, 1900, 3000, 5000, 2300, 3200, 4000],
+        data: randomData,
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      },
-      {
-        label: 'Orders',
-        data: [2, 3, 4, 5, 6, 7, 8],
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        fill: true, // Fill under the line
+        tension: 0, // No bending (sharp corners)
       },
     ],
   };
 
   // Default card data if not provided
   const defaultCardData = [
-    { title: 'MODE', value: 'Advertiser', color: 'bg-blue-500' },
-    { title: 'PENDING ORDERS', value: 0, color: 'bg-green-500' },
-    { title: 'ACCOUNT BALANCE', value: `€${accountBalance || 0}`, color: 'bg-red-500' },
-    { title: 'CART ITEMS', value: 0, color: 'bg-orange-500' },
+    { title: 'Total Revenue', value: `€${Math.floor(Math.random() * 10000)}`, color: 'bg-blue-500' },
+    { title: 'Total Orders', value: Math.floor(Math.random() * 100), color: 'bg-green-500' },
+    { title: 'Pending Orders', value: Math.floor(Math.random() * 50), color: 'bg-yellow-500' },
+    { title: 'Completed Orders', value: Math.floor(Math.random() * 50), color: 'bg-purple-500' },
   ];
-
-  // Extract the latest values for the chart title
-  const latestBalance = (chartData?.datasets[0]?.data.slice(-1)[0]) || defaultChartData.datasets[0].data.slice(-1)[0];
-  const latestOrders = (chartData?.datasets[1]?.data.slice(-1)[0]) || defaultChartData.datasets[1].data.slice(-1)[0];
 
   // Chart options
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // Allow custom height and width
     plugins: {
       legend: {
-        position: 'top',
+        display: false, // Hide the legend
       },
       title: {
         display: true,
-        text: 'Overall User Balance and Orders',
+        text: 'Account Balance Over Time',
+        position: 'top',
+        align: 'start', // Align title to the left
+      },
+      tooltip: {
+        enabled: true, // Show tooltips on hover
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false, // Hide x-axis grid lines
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)', // Light grid lines for y-axis
+        },
       },
     },
   };
@@ -66,28 +80,25 @@ const DashboardStats = ({ accountBalance, chartData, cardData }) => {
         ))}
       </div>
 
-      {/* Balance and Orders Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full p-4">
-        <div className="bg-white shadow-md rounded-lg overflow-hidden transform transition-transform hover:scale-105">
-          <div className="bg-blue-500 h-2"></div>
-          <div className="p-4 text-center">
-            <p className="text-sm text-gray-500">LATEST BALANCE</p>
-            <p className="text-2xl font-bold">€{latestBalance}</p>
-          </div>
-        </div>
-        <div className="bg-white shadow-md rounded-lg overflow-hidden transform transition-transform hover:scale-105">
-          <div className="bg-purple-500 h-2"></div>
-          <div className="p-4 text-center">
-            <p className="text-sm text-gray-500">LATEST ORDERS</p>
-            <p className="text-2xl font-bold">{latestOrders}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Graph Section */}
-      <div className="w-full p-4">
+      <div className="w-full p-4 overflow-hidden">
         <div className="bg-white shadow-md rounded-lg overflow-hidden p-4 transform transition-transform hover:scale-105">
-          <Line data={chartData || defaultChartData} options={chartOptions} />
+          <div className="flex">
+            {/* Left Section: Graph Data */}
+            <div className="w-1/5 p-4 text-center">
+              <h2 className="text-lg font-semibold mb-4">Graph Data</h2>
+              <ul>
+                <li className="text-sm text-gray-600 mb-2">Since the beginning: <br />   €9,059.47</li>
+                <li className="text-sm text-gray-600 mb-2">Last 12 months: <br /> €3,834.44</li>
+                <li className="text-sm text-gray-600 mb-2">Last 30 days: <br /> €0.00</li>
+              </ul>
+            </div>
+
+            {/* Right Section: Graph */}
+            <div className="w-4/5" style={{ height: '300px' }}> {/* Smaller height, wider width */}
+              <Line data={chartData || defaultChartData} options={chartOptions} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
