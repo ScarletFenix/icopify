@@ -14,7 +14,10 @@
         import DashboardStats from "../_components/publisher/DashboardStats";
         import Profile from "../_components/modals/Profile";
         import "../../styles/custom-scrollbar.css";
-import SitesTable from "../_components/publisher/SitesTable";
+        import SitesTable from "../_components/publisher/SitesTable";
+        import loadingAnimation from "../../public/animations/loading.json";
+        import Lottie from "lottie-react";
+        
 
         export default function DashboardPage() {
             const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -24,6 +27,15 @@ import SitesTable from "../_components/publisher/SitesTable";
             const dropdownRef = useRef(null);
             const [user, setUser] = useState(null);
             const [showScrollButton, setShowScrollButton] = useState(false);
+
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setIsMounted(true);
+  }, 5000); // Show loading animation for 5 seconds
+
+  return () => clearTimeout(timer); // Cleanup timeout
+}, []);
 
             useEffect(() => {
                 const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -164,11 +176,12 @@ import SitesTable from "../_components/publisher/SitesTable";
 
             const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            if (!isMounted) return (
-                <div className="min-h-screen flex items-center justify-center bg-[#EDF2F9]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-                </div>
-            );
+            if (!isMounted)
+                return (
+                  <div className="min-h-screen flex items-center justify-center bg-[#EDF2F9]">
+                    <Lottie animationData={loadingAnimation} loop={true} className="w-24 h-24" />
+                  </div>
+                );
 
             const buyerLinks = [
                 { name: "Dashboard", icon: <TiHomeOutline className="w-6 h-6" />, tooltip: "Overview of your projects and tasks" },

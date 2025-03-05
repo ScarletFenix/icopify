@@ -198,12 +198,11 @@ const AuthForm = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate fields
+  
     validateField("name");
     validateField("email");
     validateField("password");
-
+  
     if (!isFormValid()) {
       if (!acceptTerms) {
         toast.error("Please accept the terms and conditions.");
@@ -213,28 +212,39 @@ const AuthForm = () => {
       }
       return;
     }
-
+  
     setIsLoading(true);
     const endpoint = isLogin ? "/api/auth/local" : "/api/auth/local/register";
     const payload = isLogin
       ? { identifier, password }
       : { username: name, email: identifier, password };
-
+  
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_STRAPI_URL}${endpoint}`,
         payload
       );
+  
       if (isLogin) {
+        const user = res.data.user;
         localStorage.setItem("jwt", res.data.jwt);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        localStorage.setItem("user", JSON.stringify(user));
+  
         toast.success("Login successful!");
-        setTimeout(() => router.push("/dashboard"), 1500);
+  
+        // Redirect based on roleType
+        setTimeout(() => {
+          if (user.roleType === "Admin") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
+        }, 1500);
       } else {
         toast.success("Registration successful!");
         setTimeout(() => setIsLogin(true), 2000);
       }
-
+  
       // Clear form fields
       setIdentifier("");
       setPassword("");
@@ -246,15 +256,9 @@ const AuthForm = () => {
     } catch (err) {
       if (err.response?.data?.error) {
         const errorMessage = err.response.data.error.message.toLowerCase();
-        if (
-          errorMessage.includes("identifier") ||
-          errorMessage.includes("password")
-        ) {
+        if (errorMessage.includes("identifier") || errorMessage.includes("password")) {
           toast.error("Your email or password is incorrect.");
-        } else if (
-          errorMessage.includes("username") ||
-          errorMessage.includes("name")
-        ) {
+        } else if (errorMessage.includes("username") || errorMessage.includes("name")) {
           setErrors({ ...errors, name: "Username is already taken." });
         } else if (errorMessage.includes("email")) {
           setErrors({ ...errors, email: "Email is already registered." });
@@ -266,6 +270,7 @@ const AuthForm = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 w-full overflow-hidden">
@@ -373,4 +378,4 @@ const AuthForm = () => {
   );
 };
 
-export default AuthForm;
+export default AuthForm;   

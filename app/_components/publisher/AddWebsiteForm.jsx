@@ -72,6 +72,8 @@ const AddWebsiteForm = () => {
   const [selectedCategories, setSelectedCategories] = useState([]); // Store selected categories
   const [isCategoryInputFocused, setIsCategoryInputFocused] = useState(false); // Track focus state
 
+
+
   // Retrieve user ID from localStorage on component mount
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -93,11 +95,39 @@ const AddWebsiteForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+  
+    if (type === "number") {
+      // Allow the field to be empty
+      if (value === "") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: "",
+        }));
+        return;
+      }
+  
+      // Convert to a floating-point number
+      const numericValue = parseFloat(value);
+  
+      // Prevent negative numbers
+      if (isNaN(numericValue) || numericValue < 0) {
+        return;
+      }
+  
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numericValue, // Store as number
+      }));
+      return;
+    }
+  
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
+  
+  
 
   const handleAddWebsiteClick = () => {
     setShowTncModal(true);
@@ -116,8 +146,26 @@ const AddWebsiteForm = () => {
 
   const handleInitialSubmit = (e) => {
     e.preventDefault();
+  
+    // Validate URL
+    const url = formData.url.trim();
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+  
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      alert('Please enter a complete URL starting with http:// or https://');
+      return;
+    }
+  
+    if (!urlPattern.test(url)) {
+      alert('Please enter a valid URL with a proper domain name.');
+      return;
+    }
+  
+    // Check if siteName and URL are filled
     if (formData.siteName && formData.url) {
       setShowFullForm(true);
+    } else {
+      alert('Please fill in all required fields.');
     }
   };
 
@@ -361,54 +409,57 @@ const AddWebsiteForm = () => {
       )}
 
       {/* Initial Form Popout */}
-      {showInitialForm && !showFullForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <Card className="w-full max-w-md rounded-lg shadow-lg">
-            <CardContent className="p-6">
-              <form onSubmit={handleInitialSubmit} className="grid gap-4">
-                <div>
-                  <label className="block text-sm font-medium">
-                    Site Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="Enter site name"
-                    name="siteName"
-                    value={formData.siteName}
-                    onChange={handleChange}
-                    required
-                    className="text-sm h-10"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">
-                    URL <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="https://example.com"
-                    name="url"
-                    value={formData.url}
-                    onChange={handleChange}
-                    required
-                    className="text-sm h-10"
-                  />
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowInitialForm(false);
-                      setShowFullForm(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Next</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+{showInitialForm && !showFullForm && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <Card className="w-full max-w-md rounded-lg shadow-lg">
+      <CardContent className="p-6">
+        <form onSubmit={handleInitialSubmit} className="grid gap-4">
+          <div>
+            <label className="block text-sm font-medium">
+              Site Name <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="Enter site name"
+              name="siteName"
+              value={formData.siteName}
+              onChange={handleChange}
+              required
+              className="text-sm h-10"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">
+              URL <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="https://example.com"
+              name="url"
+              value={formData.url}
+              onChange={handleChange}
+              required
+              className="text-sm h-10"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Please enter a complete URL starting with http:// or https://
+            </p>
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowInitialForm(false);
+                setShowFullForm(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Next</Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
+)}
 
       {/* Full Form Popout */}
       {showFullForm && (
@@ -424,46 +475,65 @@ const AddWebsiteForm = () => {
                     </label>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                      <Input
-                        placeholder="0.00"
-                        type="number"
-                        step="0.01"
-                        name="pricePerPost"
-                        value={formData.pricePerPost}
-                        onChange={handleChange}
-                        required
-                        className="text-sm h-10 pl-8"
-                      />
+                      {/* Price per Post */}
+                        <Input
+                          placeholder="0.00"
+                          type="number"
+                          step="1"
+                          name="pricePerPost"
+                          value={formData.pricePerPost}
+                          onChange={handleChange}
+                          required
+                          className="text-sm h-10 pl-8"
+                          min="0"
+                        />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium">
                       Max Links Allowed <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      placeholder="Enter number"
-                      type="number"
-                      name="maxLinksAllowed"
-                      value={formData.maxLinksAllowed}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10"
-                    />
+                    {/* Max Links Allowed */}
+                      <Input
+                        placeholder="Enter number"
+                        type="number"
+                        name="maxLinksAllowed"
+                        value={formData.maxLinksAllowed}
+                        onChange={handleChange}
+                        required
+                        className="text-sm h-10"
+                        min="0"
+                        step="1"
+                      />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium">
-                      Words Limit for an Article <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      placeholder="Enter word limit"
-                      type="number"
-                      name="wordsLimitArticle"
-                      value={formData.wordsLimitArticle}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10"
-                    />
-                  </div>
+  <label className="block text-sm font-medium">
+    Words Limit for an Article <span className="text-red-500">*</span>
+  </label>
+  <select
+    name="wordsLimitArticle"
+    value={formData.wordsLimitArticle}
+    onChange={handleChange}
+    required
+    className="text-sm h-10 border border-gray-300 rounded w-full"
+  >
+    <option value="">Select word limit</option>
+    <option value="250">250</option>
+    <option value="500">500</option>
+    <option value="1000+">1000+</option>
+  </select>
+  {formData.wordsLimitArticle === '1000+' && (
+    <Input
+      type="number"
+      placeholder="Enter custom word limit"
+      name="wordsLimitArticle"
+      value={formData.wordsLimitArticle === '1000+' ? '' : formData.wordsLimitArticle}
+      onChange={handleChange}
+      className="text-sm h-10 mt-2"
+      min="1000"
+    />
+  )}
+</div>
                 </div>
                 {/* Row 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -473,16 +543,18 @@ const AddWebsiteForm = () => {
                     </label>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                      <Input
-                        placeholder="0.00"
-                        type="number"
-                        step="0.01"
-                        name="contentPlacementPrice"
-                        value={formData.contentPlacementPrice}
-                        onChange={handleChange}
-                        required
-                        className="text-sm h-10 pl-8"
-                      />
+                      {/* Content Placement Price */}
+                        <Input
+                          placeholder="0.00"
+                          type="number"
+                          step="1"
+                          name="contentPlacementPrice"
+                          value={formData.contentPlacementPrice}
+                          onChange={handleChange}
+                          required
+                          className="text-sm h-10 pl-8"
+                          min="0"
+                        />
                     </div>
                   </div>
                   <div>
@@ -491,15 +563,17 @@ const AddWebsiteForm = () => {
                     </label>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">$</span>
-                      <Input
-                        placeholder="0.00"
-                        type="number"
-                        step="0.01"
-                        name="contentCreationPlacementPrice"
-                        value={formData.contentCreationPlacementPrice}
-                        onChange={handleChange}
-                        className="text-sm h-10 pl-8"
-                      />
+                      {/* Content Creation & Placement Price */}
+                        <Input
+                          placeholder="Leave this empty if you don't write content."
+                          type="number"
+                          step="1"
+                          name="contentCreationPlacementPrice"
+                          value={formData.contentCreationPlacementPrice}
+                          onChange={handleChange}
+                          className="text-sm h-10 pl-8"
+                          min="0"
+                        />
                     </div>
                   </div>
                   <div>
