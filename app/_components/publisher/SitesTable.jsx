@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaEye, FaEdit, FaTrash, FaPlay, FaPause } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaPlay, FaPause, FaInfoCircle } from "react-icons/fa";
 import { fetchUserSites } from "../utils/fetchUserSites"; // Adjust the import path accordingly
 
 const SitesTable = () => {
@@ -9,6 +9,8 @@ const SitesTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [playing, setPlaying] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState(null);
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -37,6 +39,87 @@ const SitesTable = () => {
     getSites();
   }, []);
 
+  const updateStatusSite = async (siteId, newStatus) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("No auth token found");
+
+      console.log("Fetching site details for:", siteId);
+      const siteRes = await fetch(
+        `http://localhost:1337/api/sites/${siteId}?populate=status_site`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!siteRes.ok) throw new Error("Failed to fetch site data");
+
+      const siteData = await siteRes.json();
+      console.log("Fetched site data:", siteData);
+
+      const statusSiteId = siteData?.status_site?.id;
+
+      if (!statusSiteId) {
+        console.warn(`No status_site found for site ID: ${siteId}`);
+        alert("This site does not have an associated status record.");
+        return;
+      }
+
+      console.log(`Updating status_site ID: ${statusSiteId} with new status: ${newStatus}`);
+
+      const updatePayload = {
+        data: {
+          website_status: newStatus,
+        },
+      };
+
+      const updateRes = await fetch(
+        `http://localhost:1337/api/status-sites/${statusSiteId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatePayload),
+        }
+      );
+
+      if (!updateRes.ok) throw new Error("Failed to update status");
+
+      const updatedData = await updateRes.json();
+      console.log("✅ Status updated successfully:", updatedData);
+
+      setSites((prevSites) =>
+        prevSites.map((site) =>
+          site.id === siteId
+            ? {
+                ...site,
+                status: {
+                  ...site.status,
+                  websiteStatus: newStatus,
+                },
+              }
+            : site
+        )
+      );
+
+      setFilteredSites((prevSites) =>
+        prevSites.map((site) =>
+          site.id === siteId
+            ? {
+                ...site,
+                status: {
+                  ...site.status,
+                  websiteStatus: newStatus,
+                },
+              }
+            : site
+        )
+      );
+    } catch (error) {
+      console.error("❌ Error updating status:", error);
+    }
+  };
+
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
@@ -49,6 +132,148 @@ const SitesTable = () => {
     setPlaying((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const toggleActivityStatus = async (siteId, currentStatus) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("No auth token found");
+
+      const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+
+      const siteRes = await fetch(
+        `http://localhost:1337/api/sites/${siteId}?populate=status_site`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!siteRes.ok) throw new Error("Failed to fetch site data");
+
+      const siteData = await siteRes.json();
+      console.log("Fetched site data:", siteData);
+
+      const statusSiteId = siteData?.status_site?.id;
+
+      if (!statusSiteId) {
+        console.warn(`No status_site found for site ID: ${siteId}`);
+        alert("This site does not have an associated status record.");
+        return;
+      }
+
+      const updateRes = await fetch(
+        `http://localhost:1337/api/status-sites/${statusSiteId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            data: {
+              activity_status: newStatus, // Only update activity_status
+            },
+          }),
+        }
+      );
+
+      if (!updateRes.ok) throw new Error("Failed to update activity status");
+
+      const updatedData = await updateRes.json();
+      console.log("✅ Activity status updated successfully:", updatedData);
+
+      // Update state to reflect the new activity status
+      setSites((prevSites) =>
+        prevSites.map((site) =>
+          site.id === siteId
+            ? {
+                ...site,
+                status: {
+                  ...site.status,
+                  activityStatus: newStatus, // Only update activityStatus
+                },
+              }
+            : site
+        )
+      );
+
+      setFilteredSites((prevSites) =>
+        prevSites.map((site) =>
+          site.id === siteId
+            ? {
+                ...site,
+                status: {
+                  ...site.status,
+                  activityStatus: newStatus, // Only update activityStatus
+                },
+              }
+            : site
+        )
+      );
+    } catch (error) {
+      console.error("❌ Error updating activity status:", error);
+    }
+  };
+
+  const handleDeleteConfirmation = (siteId) => {
+    setSiteToDelete(siteId);
+    setShowDeleteModal(true);
+  };
+
+  const deleteSite = async () => {
+    if (!siteToDelete) return;
+
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("No auth token found");
+
+      const updateRes = await fetch(`http://localhost:1337/api/sites/${siteToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          data: { isDeleted: true }, // ✅ Correct format for soft delete
+        }),
+      });
+
+      const result = await updateRes.json();
+
+      if (!updateRes.ok) {
+        console.error("❌ Update failed:", result);
+        throw new Error(result?.error?.message || "Failed to mark site as deleted");
+      }
+
+      console.log("✅ Site marked as deleted successfully");
+
+      // Filter out deleted site from state
+      setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+      setFilteredSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+
+      setShowDeleteModal(false);
+      setSiteToDelete(null);
+    } catch (error) {
+      console.error("❌ Error deleting site:", error.message);
+      alert(`Error deleting site: ${error.message}`);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "InModeration":
+        return "bg-yellow-200 text-yellow-600";  
+      case "Active":
+        return "bg-green-200 text-green-600";
+      case "Inactive":
+        return "bg-red-200 text-red-600";
+      case "Approved":
+        return "bg-green-200 text-green-600";
+      case "Pending":
+        return "bg-yellow-200 text-yellow-600";
+      case "Rejected":
+        return "bg-red-200 text-red-600";
+      default:
+        return "bg-gray-200 text-gray-600";
+    }
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredSites.slice(indexOfFirstItem, indexOfLastItem);
@@ -56,6 +281,29 @@ const SitesTable = () => {
 
   return (
     <div className="bg-[#EDF2F9] p-4">
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg animate-fade-in">
+            <h2 className="text-xl font-bold mb-4">Are you sure you want to delete this site?</h2>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteSite}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full bg-[white] border border-gray-200 text-center">
           <thead>
@@ -73,7 +321,21 @@ const SitesTable = () => {
                   />
                 </div>
               </th>
-              <th className="py-2 px-2 border-r border-gray-300">Website Role</th>
+              <th className="py-2 px-2 border-r border-gray-300">
+              <div className="flex items-center justify-center space-x-1 relative group">
+  <span>Website Role</span>
+  <FaInfoCircle className="text-gray-500 cursor-pointer" />
+
+  <div
+    className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2
+    bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0
+    group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
+  >
+    Verify ownership to update website role.
+  </div>
+</div>
+
+              </th>
               <th className="py-2 px-2 border-r border-gray-300">Website Status</th>
               <th className="py-2 px-2 border-r border-gray-300">Performer Status</th>
               <th className="py-2 px-2 border-r border-gray-300">Activity Status</th>
@@ -97,42 +359,80 @@ const SitesTable = () => {
                   </td>
                   <td className="py-2 px-2 border-r border-gray-300">{site.status.websiteRole}</td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    <span className="bg-green-200 text-green-600 py-1 px-2 rounded-full text-xs">
+                    <span className={`${getStatusColor(site.status.websiteStatus)} py-1 px-2 rounded-full text-xs`}>
                       {site.status.websiteStatus}
                     </span>
                   </td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    <span className="bg-orange-200 text-orange-600 py-1 px-2 rounded-full text-xs">
+                    <span className={`${getStatusColor(site.status.performerStatus)} py-1 px-2 rounded-full text-xs`}>
                       {site.status.performerStatus}
                     </span>
                   </td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    <span className="bg-green-200 text-green-600 py-1 px-2 rounded-full text-xs">
+                    <span className={`${getStatusColor(site.status.activityStatus)} py-1 px-2 rounded-full text-xs`}>
                       {site.status.activityStatus}
                     </span>
                   </td>
-                  <td className="py-2 px-2 border-r border-gray-300">${site.contentPlacementPrice}</td>
-                  <td className="py-2 px-2 border-r border-gray-300">${site.contentCreationPlacementPrice}</td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    {site.maxLinksAllowed > 0 ? "Eligible" : "Not Eligible"}
+                    {site.contentPlacementPrice ? `$${site.contentPlacementPrice}` : "N/A"}
                   </td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    <button className="bg-blue-500 text-white py-1 px-2 rounded">
+                    {site.contentCreationPlacementPrice ? `$${site.contentCreationPlacementPrice}` : "N/A"}
+                  </td>
+                  <td className="py-2 px-2 border-r border-gray-300">
+                    {site.status.websiteRole === "Owner" ? "Eligible" : "Not Eligible"}
+                  </td>
+                  <td className="py-2 px-2 border-r border-gray-300">
+                    <button
+                      className="bg-blue-500 text-white py-1 px-2 rounded"
+                      title="View Buyer Page"
+                    >
                       <FaEye />
                     </button>
                   </td>
                   <td className="py-2 px-2 border-r border-gray-300">
-                    <button className="bg-blue-500 text-white py-1 px-2 rounded mr-1">
+                    <button
+                      className="bg-blue-500 text-white py-1 px-2 rounded mr-1"
+                      title="Edit Site"
+                    >
                       <FaEdit />
                     </button>
-                    <button className="bg-red-500 text-white py-1 px-2 rounded">
+                    <button
+                      onClick={() => handleDeleteConfirmation(site.id)}
+                      className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600"
+                      title="Delete Site"
+                    >
                       <FaTrash />
                     </button>
                   </td>
                   <td className="py-2 px-2">
-                    <button onClick={() => togglePlay(site.id)} className="bg-gray-500 text-white py-1 px-2 rounded">
-                      {playing[site.id] ? <FaPause /> : <FaPlay />}
-                    </button>
+                  <button
+  onClick={() => toggleActivityStatus(site.id, site.status.activityStatus)}
+  disabled={
+    site.status.websiteStatus === "Pending" || 
+    site.status.websiteStatus === "Rejected"
+  }
+  className={`${
+    site.status.activityStatus === "Active" ? "bg-green-500" : "bg-red-500"
+  } text-white py-1 px-2 rounded ${
+    site.status.websiteStatus === "Pending" || 
+    site.status.websiteStatus === "Rejected"
+      ? "opacity-50 cursor-not-allowed"
+      : ""
+  }`}
+  title={
+    site.status.websiteStatus === "Pending" || 
+    site.status.websiteStatus === "Rejected"
+      ? "Action unavailable for pending or rejected sites"
+      : site.status.activityStatus === "Active"
+      ? "Pause Activity"
+      : "Resume Activity"
+  }
+>
+  {site.status.activityStatus === "Active" ? <FaPause /> : <FaPlay />}
+</button>
+
+
                   </td>
                 </tr>
               ))
@@ -144,9 +444,16 @@ const SitesTable = () => {
           </tbody>
         </table>
       </div>
+      {/* Pagination */}
       <div className="flex justify-end mt-4 space-x-2">
         {Array.from({ length: totalPages }, (_, i) => (
-          <button key={i} onClick={() => setCurrentPage(i + 1)} className="px-3 py-1 border rounded bg-white hover:bg-gray-200">
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-3 py-1 border rounded ${
+              currentPage === i + 1 ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-200"
+            }`}
+          >
             {i + 1}
           </button>
         ))}

@@ -1,8 +1,60 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import AdminLayout from "./layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Users, Globe } from "lucide-react";
+import { Users, Globe, BarChart } from "lucide-react";
+import Link from "next/link";
 
 const AdminPage = () => {
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalSites, setTotalSites] = useState(0);
+  const [pendingUsers, setPendingUsers] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch data from your API
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("jwt");
+        if (!token) throw new Error("No auth token found");
+
+        // Fetch all users (using the same endpoint as UserPage)
+        const usersRes = await fetch("http://localhost:1337/api/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const usersData = await usersRes.json();
+        setTotalUsers(usersData.length); // Calculate total users based on the array length
+
+        // Fetch all sites with status-site populated
+        const sitesRes = await fetch("http://localhost:1337/api/sites?populate=status_site", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const sitesData = await sitesRes.json();
+
+        // Extract the `data` field from the response
+        const sites = sitesData.data || [];
+        setTotalSites(sites.length); // Calculate total sites based on the array length
+
+        // Filter sites to count pending users
+        const pendingUsersCount = sites.filter(
+          (site) => site.status_site?.website_status === "Pending"
+        ).length;
+        setPendingUsers(pendingUsersCount);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
   return (
     <AdminLayout>
       <div className="p-6">
@@ -10,59 +62,50 @@ const AdminPage = () => {
 
         {/* Statistics Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Total Users Card */}
           <Card className="shadow-lg p-4 border border-gray-200">
             <CardHeader className="flex items-center space-x-3">
               <Users className="text-blue-500 w-8 h-8" />
               <CardTitle>Total Users</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-semibold">1,245</p>
+              <p className="text-3xl font-semibold">{totalUsers}</p>
               <p className="text-gray-500 text-sm">Active users on the platform</p>
+              <Link href="/admin/users" className="text-blue-500 hover:underline">
+                View Users
+              </Link>
             </CardContent>
           </Card>
 
+          {/* Total Sites Card */}
           <Card className="shadow-lg p-4 border border-gray-200">
             <CardHeader className="flex items-center space-x-3">
               <Globe className="text-green-500 w-8 h-8" />
               <CardTitle>Total Sites</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-semibold">567</p>
+              <p className="text-3xl font-semibold">{totalSites}</p>
               <p className="text-gray-500 text-sm">Verified sites listed</p>
+              <Link href="/admin/users" className="text-blue-500 hover:underline">
+                View Users
+              </Link>
             </CardContent>
           </Card>
 
+          {/* Pending Users Card */}
           <Card className="shadow-lg p-4 border border-gray-200">
             <CardHeader className="flex items-center space-x-3">
               <BarChart className="text-purple-500 w-8 h-8" />
-              <CardTitle>Reports</CardTitle>
+              <CardTitle>Pending Users</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-semibold">32</p>
-              <p className="text-gray-500 text-sm">Pending user/site reports</p>
+              <p className="text-3xl font-semibold">{pendingUsers}</p>
+              <p className="text-gray-500 text-sm">Users with pending status</p>
+              <Link href="/admin/users" className="text-blue-500 hover:underline">
+                View Pending Users
+              </Link>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Recent Activity Section */}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Recent Activities</h3>
-          <div className="bg-white shadow-md rounded-lg p-4">
-            <ul className="divide-y divide-gray-200">
-              <li className="py-3 flex justify-between">
-                <span>User <strong>JohnDoe</strong> added a new site</span>
-                <span className="text-gray-500 text-sm">2 hours ago</span>
-              </li>
-              <li className="py-3 flex justify-between">
-                <span>Admin approved <strong>ExampleSite.com</strong></span>
-                <span className="text-gray-500 text-sm">5 hours ago</span>
-              </li>
-              <li className="py-3 flex justify-between">
-                <span>User <strong>JaneSmith</strong> reported a site</span>
-                <span className="text-gray-500 text-sm">1 day ago</span>
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
     </AdminLayout>

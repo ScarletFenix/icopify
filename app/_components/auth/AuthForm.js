@@ -277,7 +277,7 @@ const AuthForm = () => {
       <div className="relative bg-white shadow-lg rounded-lg flex flex-col md:flex-row max-w-4xl w-full overflow-hidden">
         {/* Left Side */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex flex-col justify-center items-center w-full md:w-1/3 text-center">
-          <h1 className="text-3xl font-bold mb-4">iCopify</h1>
+          <h1 className="text-3xl font-bold mb-4">TopUrlz</h1>
           <p className="mb-8">
             Never Pay Until You're 100% Satisfied - Increasing traffic, leads, and
             sales.

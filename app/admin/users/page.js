@@ -8,7 +8,7 @@ const UsersPage = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 5;
+  const usersPerPage = 20;
   const router = useRouter();
 
   useEffect(() => {
