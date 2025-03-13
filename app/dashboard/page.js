@@ -313,7 +313,7 @@ useEffect(() => {
                             {activeContent === "My Platform" && (
                                <div className="flex flex-col w-full h-screen bg-white mt-4 rounded-md shadow-md">
                                <div className="">
-                                 <AddWebsiteForm />
+                                 <AddWebsiteForm /> 
                                </div>
                                <div className="w-full bg-white p-2 mt-4 rounded-md shadow-md">
                                  <SitesTable  />

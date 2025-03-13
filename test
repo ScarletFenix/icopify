@@ -167,19 +167,17 @@ const AddWebsiteForm = () => {
   };
 
    // Close the form when the Enter key is pressed
-    // useEffect(() => {
-    //   const handleKeyDown = (e) => {
-    //     if (e.key === 'Enter' && (showInitialForm || showFullForm)) {
-    //       e.preventDefault();
-    //       setShowInitialForm(true);
-    //       setShowFullForm(true);
-    //     }
-    //   };
+   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault(); // Prevents the default Enter key behavior
+      }
+    };
   
-    //   window.addEventListener('keydown', handleKeyDown);
-    //   return () => window.removeEventListener('keydown', handleKeyDown);
-    //    }, [showInitialForm, showFullForm]); 
-
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -538,19 +536,31 @@ const AddWebsiteForm = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium">
-                      Max Links Allowed <span className="text-red-500">*</span>
+                    Max DoFollow Link Allowed <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      placeholder="Enter number"
-                      type="number"
+                    <select
                       name="maxLinksAllowed"
                       value={formData.maxLinksAllowed}
                       onChange={handleChange}
                       required
-                      className="text-sm h-10"
-                      min="0"
-                      step="1"
-                    />
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                    >
+                      <option value="">Select links limit</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3+">3+</option>
+                    </select>
+                    {formData.maxLinksAllowed === '3+' && (
+                      <Input
+                        type="number"
+                        placeholder="Enter custom links limit"
+                        name="maxLinksAllowed"
+                        value={formData.maxLinksAllowed === '3+' ? '' : formData.maxLinksAllowed}
+                        onChange={handleChange}
+                        className="text-sm h-10 mt-2"
+                        min="3"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium">
@@ -674,21 +684,50 @@ const AddWebsiteForm = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium">
-                      Mobile Language <span className="text-red-500">*</span>
+                      Language <span className="text-red-500">*</span>
                     </label>
                     <select
-                      name="mobileLanguage"
-                      value={formData.mobileLanguage}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10 border border-gray-300 rounded w-full"
-                    >
-                      <option value="">Select language</option>
-                      <option value="English">English</option>
-                      <option value="Spanish">Spanish</option>
-                      <option value="French">French</option>
-                      <option value="German">German</option>
-                    </select>
+  name="mobileLanguage"
+  value={formData.mobileLanguage}
+  onChange={handleChange}
+  required
+  className="text-sm h-10 border border-gray-300 rounded w-full"
+>
+  <option value="">Select language</option>
+  <option value="Arabic">Arabic</option>
+  <option value="Bengali">Bengali</option>
+  <option value="Chinese">Chinese (Mandarin)</option>
+  <option value="Dutch">Dutch</option>
+  <option value="English">English</option>
+  <option value="French">French</option>
+  <option value="German">German</option>
+  <option value="Greek">Greek</option>
+  <option value="Gujarati">Gujarati</option>
+  <option value="Hebrew">Hebrew</option>
+  <option value="Hindi">Hindi</option>
+  <option value="Indonesian">Indonesian</option>
+  <option value="Italian">Italian</option>
+  <option value="Japanese">Japanese</option>
+  <option value="Korean">Korean</option>
+  <option value="Malay">Malay</option>
+  <option value="Marathi">Marathi</option>
+  <option value="Persian">Persian</option>
+  <option value="Polish">Polish</option>
+  <option value="Portuguese">Portuguese</option>
+  <option value="Punjabi">Punjabi</option>
+  <option value="Russian">Russian</option>
+  <option value="Spanish">Spanish</option>
+  <option value="Swahili">Swahili</option>
+  <option value="Tagalog">Tagalog</option>
+  <option value="Tamil">Tamil</option>
+  <option value="Telugu">Telugu</option>
+  <option value="Thai">Thai</option>
+  <option value="Turkish">Turkish</option>
+  <option value="Ukrainian">Ukrainian</option>
+  <option value="Urdu">Urdu</option>
+  <option value="Vietnamese">Vietnamese</option>
+</select>
+
                   </div>
                 </div>
 
@@ -773,7 +812,7 @@ const AddWebsiteForm = () => {
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2
                       bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0 
                       group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                      Sponsored content is marked as paid promotion.
+                      Check in if the content is marked as sponsored
                     </div>
                   </div>
                 </div>
