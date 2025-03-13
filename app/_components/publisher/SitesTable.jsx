@@ -17,25 +17,26 @@ const SitesTable = () => {
     const getSites = async () => {
       const jwt = localStorage.getItem("jwt");
       const user = JSON.parse(localStorage.getItem("user"));
-
+  
       if (!jwt || !user) {
         console.error("🔑 JWT or user is missing. Please log in.");
         return;
       }
-
+  
       const userId = user.id;
       const data = await fetchUserSites(jwt, userId);
       console.log("📦 Fetched sites data:", data); // Debugging
-
+  
       if (data.length === 0) {
         console.warn("🚨 No sites found or data is invalid.");
       }
-
+  
+      // Sort sites by createdAt in descending order (newest first)
       const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setSites(sortedData);
       setFilteredSites(sortedData);
     };
-
+  
     getSites();
   }, []);
 

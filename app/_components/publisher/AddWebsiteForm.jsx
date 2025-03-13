@@ -9,7 +9,30 @@ import WebsiteStatus from '../modals/WebsiteStatus';
 import PublisherInstructions from '../modals/PublisherInstructions';
 import { TiInfoLarge } from 'react-icons/ti';
 import axios from 'axios';
-import Select from 'react-select';
+
+// Define languageCountryMap
+const languageCountryMap = {
+  English: ["USA", "Australia", "Bahrain", "Canada", "Ireland", "Jordan", "Morocco", "New Zealand", "Singapore", "United Kingdom", "UAE", "Thailand", "Malaysia"],
+  Chinese: ["China", "Hong Kong", "Taiwan"],
+  Korean: ["Republic of Korea"],
+  Japanese: ["Japan"],
+  Arabic: ["UAE", "Egypt", "Qatar", "Lebanon", "Kuwait", "Oman", "Yemen", "Morocco", "Kingdom of Saudi Arabia"],
+  Spanish: ["Spain", "Mexico", "Argentina", "Colombia", "Peru", "Chile", "Costa Rica", "Ecuador", "Venezuela", "Uruguay", "Cuba", "Bolivia", "Dominican Republic", "Guatemala", "Paraguay", "Honduras", "Panama"],
+  Portuguese: ["Angola", "Brazil", "Portugal"],
+  French: ["France", "Belgium", "Luxembourg", "Switzerland", "Algeria", "Mali", "Monaco", "Tunisia", "Togo"],
+  Russian: ["Russia", "Belarus", "Turkmenistan", "Kazakhstan"],
+  Ukrainian: ["Ukraine"],
+  Italian: ["Italy"],
+  Romanian: ["Romania"],
+  German: ["Austria", "Switzerland", "Luxembourg", "Germany", "Liechtenstein"],
+  Dutch: ["Netherlands", "Belgium"],
+  Turkish: ["Turkey"],
+  Serbian: ["Serbia", "Montenegro"],
+  Norwegian: ["Norway"],
+  Bulgarian: ["Bulgaria"],
+  Polish: ["Poland"],
+  Hungarian: ["Hungary"]
+};
 
 // Reusable Message Component
 const Message = ({ type, message, onClose }) => {
@@ -99,12 +122,11 @@ const AddWebsiteForm = () => {
     categories: [], // Store as array
     mobileLanguage: '',
     sponsoredContent: false,
+    country: '', // Add country field
   });
 
   const [showTncModal, setShowTncModal] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [showInitialForm, setShowInitialForm] = useState(false);
-  const [showFullForm, setShowFullForm] = useState(false);
   const [userId, setUserId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryInput, setCategoryInput] = useState('');
@@ -112,6 +134,8 @@ const AddWebsiteForm = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [isCategoryInputFocused, setIsCategoryInputFocused] = useState(false);
   const [message, setMessage] = useState(null); // State for custom messages
+  const [showForm, setShowForm] = useState(false); // Toggle form visibility
+  const [showFullForm, setShowFullForm] = useState(false); // Toggle between initial and full form
 
   // Retrieve user ID from localStorage on component mount
   useEffect(() => {
@@ -145,8 +169,8 @@ const AddWebsiteForm = () => {
     setMessage({ type, message });
   };
 
-  // Function to reset the form and close it
-  const resetAndCloseForm = () => {
+  // Function to reset the form
+  const resetForm = () => {
     setFormData({
       siteName: '',
       url: '',
@@ -161,24 +185,12 @@ const AddWebsiteForm = () => {
       categories: [],
       mobileLanguage: '',
       sponsoredContent: false,
+      country: '',
     });
     setSelectedCategories([]);
-    setShowInitialForm(false);
     setShowFullForm(false);
+    setShowForm(false); // Hide the form
   };
-
-   // Close the form when the Enter key is pressed
-   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault(); // Prevents the default Enter key behavior
-      }
-    };
-  
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-  
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -204,6 +216,23 @@ const AddWebsiteForm = () => {
       return;
     }
 
+    // Handle custom values for maxLinksAllowed and wordsLimitArticle
+    if (name === 'maxLinksAllowed' && value === '3+') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+      return;
+    }
+
+    if (name === 'wordsLimitArticle' && value === '1000+') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -217,7 +246,7 @@ const AddWebsiteForm = () => {
 
   const handleAcceptTnc = () => {
     setShowTncModal(false);
-    setShowInitialForm(true);
+    setShowForm(true); // Show the form after accepting T&C
   };
 
   const handleDeclineTnc = () => {
@@ -228,7 +257,7 @@ const AddWebsiteForm = () => {
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
 
-    const url = formData.url.trim();
+    const url = formData.url.trim().replace(/\/+$/, '').toLowerCase(); // Normalize URL
     const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
 
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -265,8 +294,7 @@ const AddWebsiteForm = () => {
 
       if (res.data.data.length > 0) {
         showMessage('warning', 'This site is already in your platform. Please add a new one.');
-        resetAndCloseForm(); // Close the form
-        return; // Prevent proceeding to the full form
+        return;
       }
 
       // If the URL is not associated, proceed to the full form
@@ -339,6 +367,7 @@ const AddWebsiteForm = () => {
       'specialRequirements',
       'categories',
       'mobileLanguage',
+      'country',
     ];
 
     for (const field of requiredFields) {
@@ -384,6 +413,7 @@ const AddWebsiteForm = () => {
         categories: formData.categories.join(','),
         owner: userId,
         contentCreationPlacementPrice: formData.contentCreationPlacementPrice || null,
+        country: formData.country, // Include country in payload
       },
     };
 
@@ -397,7 +427,7 @@ const AddWebsiteForm = () => {
 
       if (res.status === 200) {
         showMessage('success', 'Website added successfully');
-        resetAndCloseForm(); // Reset and close the form
+        resetForm(); // Reset form after successful submission
       } else {
         console.error('Error response:', res.data);
         showMessage('error', `Failed to add website: ${res.data?.error?.message || 'Unknown error'}`);
@@ -409,46 +439,6 @@ const AddWebsiteForm = () => {
       setIsSubmitting(false);
     }
   };
-
-    // Language to Country Mapping
-const languageCountryMap = {
-  English: ["USA","Australia", "Bahrain", "Canada", "Ireland", "Jordan", "Morocco", "New Zealand", "Singapore", "United Kingdom", "UAE", "Thailand", "Malaysia"],
-  Chinese: ["China", "Hong Kong", "Taiwan"],
-  Korean: ["Republic of Korea"],
-  Japanese: ["Japan"],
-  Arabic: ["UAE", "Egypt", "Qatar", "Lebanon", "Kuwait", "Oman", "Yemen", "Morocco", "Kingdom of Saudi Arabia"],
-  Spanish: ["Spain", "Mexico", "Argentina", "Colombia", "Peru", "Chile", "Costa Rica", "Ecuador", "Venezuela", "Uruguay", "Cuba", "Bolivia", "Dominican Republic", "Guatemala", "Paraguay", "Honduras", "Panama"],
-  Portuguese: ["Angola", "Brazil", "Portugal"],
-  French: ["France", "Belgium", "Luxembourg", "Switzerland", "Algeria", "Mali", "Monaco", "Tunisia", "Togo"],
-  Russian: ["Russia", "Belarus", "Turkmenistan", "Kazakhstan"],
-  Ukrainian: ["Ukraine"],
-  Italian: ["Italy"],
-  Romanian: ["Romania"],
-  German: ["Austria", "Switzerland", "Luxembourg", "Germany", "Liechtenstein"],
-  Dutch: ["Netherlands", "Belgium"],
-  Turkish: ["Turkey"],
-  Serbian: ["Serbia", "Montenegro"],
-  Norwegian: ["Norway"],
-  Bulgarian: ["Bulgaria"],
-  Polish: ["Poland"],
-  Hungarian: ["Hungary"]
-};
-
-
-const handleLanguageChange = (e) => {
-  const selectedLanguage = e.target.value;
-  setFormData({
-    ...formData,
-    mobileLanguage: selectedLanguage,
-    country: "" // Reset country when language changes
-  });
-};
-
-const handleCountryChange = (e) => {
-  setFormData({ ...formData, country: e.target.value });
-};
-
-
 
   return (
     <div className="w-full bg-white">
@@ -505,77 +495,65 @@ const handleCountryChange = (e) => {
             <span>Add New Website</span>
           </Button>
         </div>
-      </div>
 
-      {/* Terms & Conditions Modal */}
-      {showTncModal && (
-        <TermsAndConditions onAccept={handleAcceptTnc} onDecline={handleDeclineTnc} />
-      )}
+        {/* Terms & Conditions Modal */}
+        {showTncModal && (
+          <TermsAndConditions onAccept={handleAcceptTnc} onDecline={handleDeclineTnc} />
+        )}
 
-      {/* Initial Form Popout */}
-      {showInitialForm && !showFullForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <Card className="w-full max-w-md rounded-lg shadow-lg">
-            <CardContent className="p-6">
-              <form onSubmit={handleInitialSubmit} className="grid gap-4">
-                <div>
-                  <label className="block text-sm font-medium">
-                    Site Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="Enter site name"
-                    name="siteName"
-                    value={formData.siteName}
-                    onChange={handleChange}
-                    required
-                    className="text-sm h-10"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">
-                    URL <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="https://example.com"
-                    name="url"
-                    value={formData.url}
-                    onChange={handleChange}
-                    required
-                    className="text-sm h-10"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Please enter a complete URL starting with http:// or https://
-                  </p>
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowInitialForm(false);
-                      setShowFullForm(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Next</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        {/* Initial Form (Inline) */}
+        {showForm && !showFullForm && (
+          <div className="mt-4 flex items-center space-x-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium">
+                Site Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                placeholder="Enter site name"
+                name="siteName"
+                value={formData.siteName}
+                onChange={handleChange}
+                required
+                className="text-sm h-10"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium">
+                URL <span className="text-red-500">*</span>
+              </label>
+              <Input
+                placeholder="https://example.com"
+                name="url"
+                value={formData.url}
+                onChange={handleChange}
+                required
+                className="text-sm h-10"
+              />
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={resetForm}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleInitialSubmit}>
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
-      {/* Full Form Popout */}
-      {showFullForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 mt-10">
-          <Card className="w-full max-w-5xl rounded-lg shadow-lg">
+        {/* Full Form (3 Fields per Row) */}
+        {showFullForm && (
+          <Card className="mt-4">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="grid gap-6">
                 {/* Row 1 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium">
-                    Max DoFollow Link Allowed <span className="text-red-500">*</span>
+                      Max DoFollow Link Allowed <span className="text-red-500">*</span>
                     </label>
                     <select
                       name="maxLinksAllowed"
@@ -713,7 +691,7 @@ const handleCountryChange = (e) => {
                     <select
                       name="mobileLanguage"
                       value={formData.mobileLanguage}
-                      onChange={handleLanguageChange}
+                      onChange={handleChange}
                       required
                       className="text-sm h-10 border border-gray-300 rounded w-full"
                     >
@@ -731,7 +709,7 @@ const handleCountryChange = (e) => {
                     <select
                       name="country"
                       value={formData.country}
-                      onChange={handleCountryChange}
+                      onChange={handleChange}
                       required
                       className="text-sm h-10 border border-gray-300 rounded w-full"
                       disabled={!formData.mobileLanguage}
@@ -833,10 +811,7 @@ const handleCountryChange = (e) => {
                 <div className="flex justify-end space-x-3">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setShowFullForm(false);
-                      setShowInitialForm(false);
-                    }}
+                    onClick={resetForm}
                   >
                     Cancel
                   </Button>
@@ -847,8 +822,8 @@ const handleCountryChange = (e) => {
               </form>
             </CardContent>
           </Card>
-          </ div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

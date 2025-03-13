@@ -9,6 +9,7 @@ import WebsiteStatus from '../modals/WebsiteStatus';
 import PublisherInstructions from '../modals/PublisherInstructions';
 import { TiInfoLarge } from 'react-icons/ti';
 import axios from 'axios';
+import Select from 'react-select';
 
 // Reusable Message Component
 const Message = ({ type, message, onClose }) => {
@@ -409,7 +410,45 @@ const AddWebsiteForm = () => {
     }
   };
 
-    
+    // Language to Country Mapping
+const languageCountryMap = {
+  English: ["USA","Australia", "Bahrain", "Canada", "Ireland", "Jordan", "Morocco", "New Zealand", "Singapore", "United Kingdom", "UAE", "Thailand", "Malaysia"],
+  Chinese: ["China", "Hong Kong", "Taiwan"],
+  Korean: ["Republic of Korea"],
+  Japanese: ["Japan"],
+  Arabic: ["UAE", "Egypt", "Qatar", "Lebanon", "Kuwait", "Oman", "Yemen", "Morocco", "Kingdom of Saudi Arabia"],
+  Spanish: ["Spain", "Mexico", "Argentina", "Colombia", "Peru", "Chile", "Costa Rica", "Ecuador", "Venezuela", "Uruguay", "Cuba", "Bolivia", "Dominican Republic", "Guatemala", "Paraguay", "Honduras", "Panama"],
+  Portuguese: ["Angola", "Brazil", "Portugal"],
+  French: ["France", "Belgium", "Luxembourg", "Switzerland", "Algeria", "Mali", "Monaco", "Tunisia", "Togo"],
+  Russian: ["Russia", "Belarus", "Turkmenistan", "Kazakhstan"],
+  Ukrainian: ["Ukraine"],
+  Italian: ["Italy"],
+  Romanian: ["Romania"],
+  German: ["Austria", "Switzerland", "Luxembourg", "Germany", "Liechtenstein"],
+  Dutch: ["Netherlands", "Belgium"],
+  Turkish: ["Turkey"],
+  Serbian: ["Serbia", "Montenegro"],
+  Norwegian: ["Norway"],
+  Bulgarian: ["Bulgaria"],
+  Polish: ["Poland"],
+  Hungarian: ["Hungary"]
+};
+
+
+const handleLanguageChange = (e) => {
+  const selectedLanguage = e.target.value;
+  setFormData({
+    ...formData,
+    mobileLanguage: selectedLanguage,
+    country: "" // Reset country when language changes
+  });
+};
+
+const handleCountryChange = (e) => {
+  setFormData({ ...formData, country: e.target.value });
+};
+
+
 
   return (
     <div className="w-full bg-white">
@@ -669,65 +708,39 @@ const AddWebsiteForm = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium">
-                      Link Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="linkType"
-                      value={formData.linkType}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10 border border-gray-300 rounded w-full"
-                    >
-                      <option value="DoFollow">DoFollow</option>
-                      <option value="NoFollow">NoFollow</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium">
                       Language <span className="text-red-500">*</span>
                     </label>
                     <select
-  name="mobileLanguage"
-  value={formData.mobileLanguage}
-  onChange={handleChange}
-  required
-  className="text-sm h-10 border border-gray-300 rounded w-full"
->
-  <option value="">Select language</option>
-  <option value="Arabic">Arabic</option>
-  <option value="Bengali">Bengali</option>
-  <option value="Chinese">Chinese (Mandarin)</option>
-  <option value="Dutch">Dutch</option>
-  <option value="English">English</option>
-  <option value="French">French</option>
-  <option value="German">German</option>
-  <option value="Greek">Greek</option>
-  <option value="Gujarati">Gujarati</option>
-  <option value="Hebrew">Hebrew</option>
-  <option value="Hindi">Hindi</option>
-  <option value="Indonesian">Indonesian</option>
-  <option value="Italian">Italian</option>
-  <option value="Japanese">Japanese</option>
-  <option value="Korean">Korean</option>
-  <option value="Malay">Malay</option>
-  <option value="Marathi">Marathi</option>
-  <option value="Persian">Persian</option>
-  <option value="Polish">Polish</option>
-  <option value="Portuguese">Portuguese</option>
-  <option value="Punjabi">Punjabi</option>
-  <option value="Russian">Russian</option>
-  <option value="Spanish">Spanish</option>
-  <option value="Swahili">Swahili</option>
-  <option value="Tagalog">Tagalog</option>
-  <option value="Tamil">Tamil</option>
-  <option value="Telugu">Telugu</option>
-  <option value="Thai">Thai</option>
-  <option value="Turkish">Turkish</option>
-  <option value="Ukrainian">Ukrainian</option>
-  <option value="Urdu">Urdu</option>
-  <option value="Vietnamese">Vietnamese</option>
-</select>
+                      name="mobileLanguage"
+                      value={formData.mobileLanguage}
+                      onChange={handleLanguageChange}
+                      required
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                    >
+                      <option value="">Select language</option>
+                      {Object.keys(languageCountryMap).map((lang) => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </select>
+                  </div>
 
+                  <div>
+                    <label className="block text-sm font-medium">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleCountryChange}
+                      required
+                      className="text-sm h-10 border border-gray-300 rounded w-full"
+                      disabled={!formData.mobileLanguage}
+                    >
+                      <option value="">Select country</option>
+                      {formData.mobileLanguage && languageCountryMap[formData.mobileLanguage]?.map((country) => (
+                        <option key={country} value={country}>{country}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -812,7 +825,7 @@ const AddWebsiteForm = () => {
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2
                       bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0 
                       group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                      Check in if the content is marked as sponsored
+                      Check mark if the content is marked as sponsored
                     </div>
                   </div>
                 </div>
