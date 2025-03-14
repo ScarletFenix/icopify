@@ -136,6 +136,7 @@ const AddWebsiteForm = () => {
   const [message, setMessage] = useState(null); // State for custom messages
   const [showForm, setShowForm] = useState(false); // Toggle form visibility
   const [showFullForm, setShowFullForm] = useState(false); // Toggle between initial and full form
+  const [isExistingSite, setIsExistingSite] = useState(false); // Track if the site already exists globally
 
   // Retrieve user ID from localStorage on component mount
   useEffect(() => {
@@ -190,6 +191,7 @@ const AddWebsiteForm = () => {
     setSelectedCategories([]);
     setShowFullForm(false);
     setShowForm(false); // Hide the form
+    setIsExistingSite(false); // Reset existing site flag
   };
 
   const handleChange = (e) => {
@@ -256,55 +258,95 @@ const AddWebsiteForm = () => {
 
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleInitialSubmit called');
 
-    const url = formData.url.trim().replace(/\/+$/, '').toLowerCase(); // Normalize URL
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    const url = formData.url.trim().replace(/\/+$/, '').toLowerCase();
+    console.log('Normalized URL:', url);
+
+    const urlPattern = /^(https?:\/\/)?(www\.)?[\w.-]+\.[a-z]{2,}([\/?#].*)?$/i;
 
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      showMessage('error', 'Please enter a complete URL starting with http:// or https://');
-      return;
+        showMessage('error', 'Please enter a complete URL starting with http:// or https://');
+        return;
     }
 
     if (!urlPattern.test(url)) {
-      showMessage('error', 'Please enter a valid URL with a proper domain name.');
-      return;
+        showMessage('error', 'Please enter a valid URL with a proper domain name.');
+        return;
     }
 
     if (!formData.siteName || !formData.url) {
-      showMessage('error', 'Please fill in all required fields.');
-      return;
+        showMessage('error', 'Please fill in all required fields.');
+        return;
     }
 
-    // Check if the URL is already associated with the user
     const token = localStorage.getItem('jwt');
     if (!token) {
-      showMessage('error', 'You are not authorized. Please log in first.');
-      return;
+        showMessage('error', 'You are not authorized. Please log in first.');
+        return;
     }
 
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/sites?filters[url][$eq]=${encodeURIComponent(url)}&filters[owner][id][$eq]=${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await axios.get(
+            `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/sites?filters[url][$eq]=${url}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        const existingSite = res.data?.data?.[0];
+
+        if (existingSite) {
+            const siteDetails = await axios.get(
+                `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/sites/${existingSite.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const siteData = siteDetails.data;
+
+            // 🚫 Block submission if `isDeleted` is true for the current user
+            if (siteData.isDeleted && siteData.owner.id === userId) {
+                showMessage('error', 'This site has been deleted and cannot be added again.');
+                return;
+            }
+
+            // 🚫 Prevent duplicate entry for the same user
+            if (siteData.owner.id === userId) {
+                showMessage('error', 'This site already exists in your account. You cannot add a duplicate site.');
+                return;
+            }
+
+            // 🌍 For all users: Pre-fill language & country and disable fields
+            setFormData((prev) => ({
+                ...prev,
+                mobileLanguage: siteData.mobileLanguage,
+                country: siteData.country,
+            }));
+
+            setIsExistingSite(true);
+            setShowFullForm(true);
+            showMessage('info', 'Language and country have been pre-filled and disabled for this site.');
+            return;
         }
-      );
 
-      if (res.data.data.length > 0) {
-        showMessage('warning', 'This site is already in your platform. Please add a new one.');
-        return;
-      }
-
-      // If the URL is not associated, proceed to the full form
-      setShowFullForm(true);
+        // 🌟 If no site exists, proceed with full form
+        setShowFullForm(true);
     } catch (error) {
-      console.error('Error checking URL:', error);
-      showMessage('error', 'An error occurred while checking the URL.');
+        console.error('Error checking URL:', error.response?.data || error.message);
+        showMessage('error', 'An error occurred while checking the URL. Please try again.');
     }
-  };
+};
 
+
+  
+  
+  
   const handleCategoryInputChange = (e) => {
     const inputValue = e.target.value;
     setCategoryInput(inputValue);
@@ -694,6 +736,7 @@ const AddWebsiteForm = () => {
                       onChange={handleChange}
                       required
                       className="text-sm h-10 border border-gray-300 rounded w-full"
+                      disabled={isExistingSite} // Disable if site exists
                     >
                       <option value="">Select language</option>
                       {Object.keys(languageCountryMap).map((lang) => (
@@ -712,7 +755,7 @@ const AddWebsiteForm = () => {
                       onChange={handleChange}
                       required
                       className="text-sm h-10 border border-gray-300 rounded w-full"
-                      disabled={!formData.mobileLanguage}
+                      disabled={isExistingSite} // Disable if site exists
                     >
                       <option value="">Select country</option>
                       {formData.mobileLanguage && languageCountryMap[formData.mobileLanguage]?.map((country) => (
