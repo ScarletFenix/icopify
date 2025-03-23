@@ -17,7 +17,6 @@ export const metadata = {
   description: "Guest Posting Platform",
   icons: {
     icon: '/logoipsum-327.svg',
-    // icon: '/loader.json',
   },
 };
 

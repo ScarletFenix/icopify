@@ -324,17 +324,17 @@ const SitesTable = () => {
               </th>
               <th className="py-2 px-2 border-r border-gray-300">
               <div className="flex items-center justify-center space-x-1 relative group">
-  <span>Website Role</span>
-  <FaInfoCircle className="text-gray-500 cursor-pointer" />
+                  <span>Website Role</span>
+                  <FaInfoCircle className="text-gray-500 cursor-pointer" />
 
-  <div
-    className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2
-    bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0
-    group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
-  >
-    Verify ownership to update website role.
-  </div>
-</div>
+                  <div
+                    className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2
+                    bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0
+                      group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
+                      >
+                    Verify ownership to update website role.
+                  </div>
+                </div>
 
               </th>
               <th className="py-2 px-2 border-r border-gray-300">Website Status</th>

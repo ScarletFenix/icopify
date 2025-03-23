@@ -2,13 +2,16 @@
         import { useState, useEffect, useRef } from "react";
         import {
             FaUser, FaSignOutAlt, FaStar, FaUsers, FaLink, FaQuestionCircle, FaUsers as FaUsersIcon, FaArrowUp,
+            FaMoneyBillWave,
+            FaPenNib,
+            FaShoppingBag,
         } from "react-icons/fa";
         import { TiHomeOutline } from "react-icons/ti";
         import { RxRocket } from "react-icons/rx";
         import { GrTask } from "react-icons/gr";
         import { PiUserList } from "react-icons/pi";
         import { FaSackDollar } from "react-icons/fa6";
-        import { MdOutlineManageHistory } from "react-icons/md";
+        import { MdContentPaste, MdOutlineManageHistory } from "react-icons/md";
         import { FiMenu } from "react-icons/fi";
         import AddWebsiteForm from "../_components/publisher/AddWebsiteForm";
         import DashboardStats from "../_components/publisher/DashboardStats";
@@ -17,6 +20,8 @@
         import SitesTable from "../_components/publisher/SitesTable";
         import loadingAnimation from "../../public/animations/loading.json";
         import Lottie from "lottie-react";
+import BuyerDashboardStats from "../_components/buyer/BuyerDashboardStats";
+import ProjectsList from "../_components/buyer/ProjectsList";
         
 
         export default function DashboardPage() {
@@ -189,6 +194,11 @@ useEffect(() => {
                 { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "Explore and connect with publishers" },
                 { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Manage your link insertion tasks" },
                 { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Discover recommended sites for collaboration" },
+                { name: "Local Citation", icon: <MdContentPaste className="w-6 h-6" />, tooltip: "Discover Offers" },
+                { name: "Content Writing", icon: <FaPenNib className="w-6 h-6" />, tooltip: "View all your sites" },     
+                { name: "My Orders", icon: <FaShoppingBag className="w-6 h-6" />, tooltip: "View all Orders" },
+                { name: "Add Funds", icon: <FaMoneyBillWave className="w-6 h-6" />, tooltip: "Add fund for orders" },
+
             ];
 
             const publisherLinks = [
@@ -304,7 +314,7 @@ useEffect(() => {
                         <main className="flex flex-col items-center justify-start space-y-4 p-4 w-full h-full">
                             {activeContent === "Dashboard" && (
                                 <div className="w-full h-full mt-1 rounded-lg shadow-md">
-                                    {user.roleType === "publisher" ? <DashboardStats /> : <BuyerDashboard />}
+                                    {user.roleType === "publisher" ? <DashboardStats /> : <BuyerDashboardStats />}
                                 </div>
                             )}
                             {activeContent === "Profile" && (
@@ -320,6 +330,14 @@ useEffect(() => {
                                </div>
                              </div>
                             )}
+
+                             {/* ADD BUYER COMPONENTS HERE */}
+                            {activeContent === "All My Projects" && <div className="w-full h-full ">
+                                <div className=""><ProjectsList /></div>
+                                </div>}
+                            {/* {activeContent === "All Publishers" && <AllPublishers />} */}
+                            {/* {activeContent === "Link Insertions" && <LinkInsertions />} */}
+                            {/* {activeContent === "Recommended Sites" && <RecommendedSites />} */} 
                         </main>
                     </div>
 
@@ -336,12 +354,3 @@ useEffect(() => {
             );
         }
 
-        // Placeholder for BuyerDashboard component
-        function BuyerDashboard() {
-            return (
-                <div className="p-4">
-                    <h2 className="text-2xl font-bold">Buyer Dashboard</h2>
-                    <p>Welcome to the Buyer Dashboard. Here you can manage your projects and tasks.</p>
-                </div>
-            );
-        }
