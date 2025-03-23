@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,

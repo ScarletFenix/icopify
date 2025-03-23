@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { FaPlus, FaTimesCircle, FaTimes } from 'react-icons/fa';
 import TermsAndConditions from '../modals/TermsAndConditions';
 import WebsiteStatus from '../modals/WebsiteStatus';
@@ -494,12 +494,6 @@ const AddWebsiteForm = () => {
           />
         </div>
       )}
-
-      {/* Website Status Bar */}
-      <div className="px-4 py-2">
-        <WebsiteStatus />
-        <PublisherInstructions />
-      </div>
 
       {/* Add Website Form */}
       <div className="mt-3 w-full px-4">

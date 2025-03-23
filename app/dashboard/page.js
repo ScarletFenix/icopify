@@ -22,6 +22,8 @@
         import Lottie from "lottie-react";
 import BuyerDashboardStats from "../_components/buyer/BuyerDashboardStats";
 import ProjectsList from "../_components/buyer/ProjectsList";
+import WebsiteStatus from "../_components/modals/WebsiteStatus";
+import PublisherInstructions from "../_components/modals/PublisherInstructions";
         
 
         export default function DashboardPage() {
@@ -322,9 +324,11 @@ useEffect(() => {
                             )}
                             {activeContent === "My Platform" && (
                                <div className="flex flex-col w-full h-screen bg-white mt-4 rounded-md shadow-md">
-                               <div className="">
-                                 <AddWebsiteForm /> 
-                               </div>
+                               {/* Website Status Bar */}
+                                    <div className="px-4 py-2">
+                                        <WebsiteStatus />
+                                        <PublisherInstructions />
+                                    </div>
                                <div className="w-full bg-white p-2 mt-4 rounded-md shadow-md">
                                  <SitesTable  />
                                </div>

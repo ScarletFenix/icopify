@@ -1,126 +1,52 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaEye, FaEdit, FaTrash, FaPlay, FaPause, FaInfoCircle } from "react-icons/fa";
-import { fetchUserSites } from "../utils/fetchUserSites"; // Adjust the import path accordingly
+import { fetchUserSites } from "../utils/fetchUserSites";
+import AddWebsiteForm from "./AddWebsiteForm";
+import EditSiteModal from "./EditSiteModal"; // Import the EditSiteModal
+import { toast } from "react-toastify"; // Ensure toast is imported
 
 const SitesTable = () => {
   const [sites, setSites] = useState([]);
   const [filteredSites, setFilteredSites] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [playing, setPlaying] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [siteToDelete, setSiteToDelete] = useState(null);
-  const itemsPerPage = 20;
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [siteToEdit, setSiteToEdit] = useState(null); // Track the site being edited
+  const itemsPerPage = 20; // Number of items to display per page
 
+  // Fetch sites on component mount
   useEffect(() => {
-    const getSites = async () => {
-      const jwt = localStorage.getItem("jwt");
-      const user = JSON.parse(localStorage.getItem("user"));
-  
-      if (!jwt || !user) {
-        console.error("🔑 JWT or user is missing. Please log in.");
-        return;
-      }
-  
-      const userId = user.id;
-      const data = await fetchUserSites(jwt, userId);
-      console.log("📦 Fetched sites data:", data); // Debugging
-  
-      if (data.length === 0) {
-        console.warn("🚨 No sites found or data is invalid.");
-      }
-  
-      // Sort sites by createdAt in descending order (newest first)
-      const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setSites(sortedData);
-      setFilteredSites(sortedData);
-    };
-  
-    getSites();
+    fetchSites();
   }, []);
 
-  const updateStatusSite = async (siteId, newStatus) => {
-    try {
-      const token = localStorage.getItem("jwt");
-      if (!token) throw new Error("No auth token found");
+  // Function to fetch sites
+  const fetchSites = async () => {
+    const jwt = localStorage.getItem("jwt");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-      console.log("Fetching site details for:", siteId);
-      const siteRes = await fetch(
-        `http://localhost:1337/api/sites/${siteId}?populate=status_site`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (!siteRes.ok) throw new Error("Failed to fetch site data");
-
-      const siteData = await siteRes.json();
-      console.log("Fetched site data:", siteData);
-
-      const statusSiteId = siteData?.status_site?.id;
-
-      if (!statusSiteId) {
-        console.warn(`No status_site found for site ID: ${siteId}`);
-        alert("This site does not have an associated status record.");
-        return;
-      }
-
-      console.log(`Updating status_site ID: ${statusSiteId} with new status: ${newStatus}`);
-
-      const updatePayload = {
-        data: {
-          website_status: newStatus,
-        },
-      };
-
-      const updateRes = await fetch(
-        `http://localhost:1337/api/status-sites/${statusSiteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updatePayload),
-        }
-      );
-
-      if (!updateRes.ok) throw new Error("Failed to update status");
-
-      const updatedData = await updateRes.json();
-      console.log("✅ Status updated successfully:", updatedData);
-
-      setSites((prevSites) =>
-        prevSites.map((site) =>
-          site.id === siteId
-            ? {
-                ...site,
-                status: {
-                  ...site.status,
-                  websiteStatus: newStatus,
-                },
-              }
-            : site
-        )
-      );
-
-      setFilteredSites((prevSites) =>
-        prevSites.map((site) =>
-          site.id === siteId
-            ? {
-                ...site,
-                status: {
-                  ...site.status,
-                  websiteStatus: newStatus,
-                },
-              }
-            : site
-        )
-      );
-    } catch (error) {
-      console.error("❌ Error updating status:", error);
+    if (!jwt || !user) {
+      console.error("🔑 JWT or user is missing. Please log in.");
+      return;
     }
+
+    const userId = user.id;
+    const data = await fetchUserSites(jwt, userId);
+    console.log("📦 Fetched sites data:", data);
+
+    if (data.length === 0) {
+      console.warn("🚨 No sites found or data is invalid.");
+    }
+
+    // Sort sites by createdAt in descending order (newest first)
+    const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    setSites(sortedData);
+    setFilteredSites(sortedData);
   };
 
+  // Handle search
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
@@ -129,10 +55,66 @@ const SitesTable = () => {
     );
   };
 
-  const togglePlay = (id) => {
-    setPlaying((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Handle edit icon click
+  const handleEditClick = (site) => {
+    
+    if (!site || !site.id) {
+      console.error("Invalid site data:", site);
+      toast.error("Invalid site data. Please try again.");
+      return;
+    }
+    console.log("Editing site with ID:", site.id); // Debugging
+    setSiteToEdit(site); // Set the site to edit
+    setShowEditModal(true); // Show the edit modal
   };
 
+  // Handle delete confirmation
+  const handleDeleteConfirmation = (siteId) => {
+    setSiteToDelete(siteId);
+    setShowDeleteModal(true);
+  };
+
+  // Delete site
+  const deleteSite = async () => {
+    if (!siteToDelete) return;
+
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("No auth token found");
+
+      const updateRes = await fetch(`http://localhost:1337/api/sites/${siteToDelete}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          data: { isDeleted: true }, // Soft delete
+        }),
+      });
+
+      const result = await updateRes.json();
+
+      if (!updateRes.ok) {
+        console.error("❌ Update failed:", result);
+        throw new Error(result?.error?.message || "Failed to mark site as deleted");
+      }
+
+      console.log("✅ Site marked as deleted successfully");
+
+      // Filter out deleted site from state
+      setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+      setFilteredSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
+
+      setShowDeleteModal(false);
+      setSiteToDelete(null);
+    } catch (error) {
+      console.error("❌ Error deleting site:", error.message);
+      alert(`Error deleting site: ${error.message}`);
+    }
+  };
+
+  // Toggle activity status
   const toggleActivityStatus = async (siteId, currentStatus) => {
     try {
       const token = localStorage.getItem("jwt");
@@ -212,54 +194,11 @@ const SitesTable = () => {
     }
   };
 
-  const handleDeleteConfirmation = (siteId) => {
-    setSiteToDelete(siteId);
-    setShowDeleteModal(true);
-  };
-
-  const deleteSite = async () => {
-    if (!siteToDelete) return;
-
-    try {
-      const token = localStorage.getItem("jwt");
-      if (!token) throw new Error("No auth token found");
-
-      const updateRes = await fetch(`http://localhost:1337/api/sites/${siteToDelete}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          data: { isDeleted: true }, // ✅ Correct format for soft delete
-        }),
-      });
-
-      const result = await updateRes.json();
-
-      if (!updateRes.ok) {
-        console.error("❌ Update failed:", result);
-        throw new Error(result?.error?.message || "Failed to mark site as deleted");
-      }
-
-      console.log("✅ Site marked as deleted successfully");
-
-      // Filter out deleted site from state
-      setSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
-      setFilteredSites((prevSites) => prevSites.filter((site) => site.id !== siteToDelete));
-
-      setShowDeleteModal(false);
-      setSiteToDelete(null);
-    } catch (error) {
-      console.error("❌ Error deleting site:", error.message);
-      alert(`Error deleting site: ${error.message}`);
-    }
-  };
-
+  // Get status color
   const getStatusColor = (status) => {
     switch (status) {
       case "InModeration":
-        return "bg-yellow-200 text-yellow-600";  
+        return "bg-yellow-200 text-yellow-600";
       case "Active":
         return "bg-green-200 text-green-600";
       case "Inactive":
@@ -275,6 +214,7 @@ const SitesTable = () => {
     }
   };
 
+  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredSites.slice(indexOfFirstItem, indexOfLastItem);
@@ -305,6 +245,24 @@ const SitesTable = () => {
         </div>
       )}
 
+      {/* Edit Site Modal */}
+      {showEditModal && siteToEdit && (
+        <EditSiteModal
+          siteId={siteToEdit.id} // Pass the site ID to the modal
+          onClose={() => setShowEditModal(false)}
+          onUpdate={() => {
+            fetchSites(); // Refresh the list of sites after update
+            setShowEditModal(false); // Close the modal
+          }}
+        />
+      )}
+
+      <div className="flex flex-col w-full bg-white mt-4 rounded-md shadow-md">
+        <div className="mb-4 p-4">
+          <AddWebsiteForm onWebsiteAdded={fetchSites} />
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full bg-[white] border border-gray-200 text-center">
           <thead>
@@ -322,21 +280,7 @@ const SitesTable = () => {
                   />
                 </div>
               </th>
-              <th className="py-2 px-2 border-r border-gray-300">
-              <div className="flex items-center justify-center space-x-1 relative group">
-                  <span>Website Role</span>
-                  <FaInfoCircle className="text-gray-500 cursor-pointer" />
-
-                  <div
-                    className="absolute bottom-[-30px] left-1/2 transform -translate-x-1/2
-                    bg-[#282828] text-white text-xs rounded py-1 px-2 opacity-0
-                      group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10"
-                      >
-                    Verify ownership to update website role.
-                  </div>
-                </div>
-
-              </th>
+              <th className="py-2 px-2 border-r border-gray-300">Website Role</th>
               <th className="py-2 px-2 border-r border-gray-300">Website Status</th>
               <th className="py-2 px-2 border-r border-gray-300">Performer Status</th>
               <th className="py-2 px-2 border-r border-gray-300">Activity Status</th>
@@ -395,6 +339,7 @@ const SitesTable = () => {
                     <button
                       className="bg-blue-500 text-white py-1 px-2 rounded mr-1"
                       title="Edit Site"
+                      onClick={() => handleEditClick(site)} // Add onClick handler
                     >
                       <FaEdit />
                     </button>
@@ -407,33 +352,31 @@ const SitesTable = () => {
                     </button>
                   </td>
                   <td className="py-2 px-2">
-                  <button
-  onClick={() => toggleActivityStatus(site.id, site.status.activityStatus)}
-  disabled={
-    site.status.websiteStatus === "Pending" || 
-    site.status.websiteStatus === "Rejected"
-  }
-  className={`${
-    site.status.activityStatus === "Active" ? "bg-green-500" : "bg-red-500"
-  } text-white py-1 px-2 rounded ${
-    site.status.websiteStatus === "Pending" || 
-    site.status.websiteStatus === "Rejected"
-      ? "opacity-50 cursor-not-allowed"
-      : ""
-  }`}
-  title={
-    site.status.websiteStatus === "Pending" || 
-    site.status.websiteStatus === "Rejected"
-      ? "Action unavailable for pending or rejected sites"
-      : site.status.activityStatus === "Active"
-      ? "Pause Activity"
-      : "Resume Activity"
-  }
->
-  {site.status.activityStatus === "Active" ? <FaPause /> : <FaPlay />}
-</button>
-
-
+                    <button
+                      onClick={() => toggleActivityStatus(site.id, site.status.activityStatus)}
+                      disabled={
+                        site.status.websiteStatus === "Pending" || 
+                        site.status.websiteStatus === "Rejected"
+                      }
+                      className={`${
+                        site.status.activityStatus === "Active" ? "bg-green-500" : "bg-red-500"
+                      } text-white py-1 px-2 rounded ${
+                        site.status.websiteStatus === "Pending" || 
+                        site.status.websiteStatus === "Rejected"
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      title={
+                        site.status.websiteStatus === "Pending" || 
+                        site.status.websiteStatus === "Rejected"
+                          ? "Action unavailable for pending or rejected sites"
+                          : site.status.activityStatus === "Active"
+                          ? "Pause Activity"
+                          : "Resume Activity"
+                      }
+                    >
+                      {site.status.activityStatus === "Active" ? <FaPause /> : <FaPlay />}
+                    </button>
                   </td>
                 </tr>
               ))

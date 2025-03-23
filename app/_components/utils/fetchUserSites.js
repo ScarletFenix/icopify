@@ -4,7 +4,6 @@ export const fetchUserSites = async (token, userId) => {
   
       const response = await fetch(
         `http://localhost:1337/api/sites?populate=status_site&filters[owner][id][$eq]=${userId}&filters[isDeleted][$eq]=false&fields[0]=url&fields[1]=contentPlacementPrice&fields[2]=contentCreationPlacementPrice&fields[3]=maxLinksAllowed`,
-        // `http://localhost:1337/api/sites?populate=status_site&filters[owner][id][$eq]=${userId}&fields[0]=url&fields[1]=contentPlacementPrice&fields[2]=contentCreationPlacementPrice&fields[3]=maxLinksAllowed`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
