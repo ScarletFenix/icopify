@@ -82,7 +82,7 @@ const SitesTable = () => {
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("No auth token found");
 
-      const updateRes = await fetch(`http://localhost:1337/api/sites/${siteToDelete}`, {
+      const updateRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sites/${siteToDelete}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,7 @@ const SitesTable = () => {
       const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
 
       const siteRes = await fetch(
-        `http://localhost:1337/api/sites/${siteId}?populate=status_site`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/sites/${siteId}?populate=status_site`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -141,7 +141,7 @@ const SitesTable = () => {
       }
 
       const updateRes = await fetch(
-        `http://localhost:1337/api/status-sites/${statusSiteId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/status-sites/${statusSiteId}`,
         {
           method: "PUT",
           headers: {

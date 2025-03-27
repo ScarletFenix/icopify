@@ -78,7 +78,7 @@ const AddWebsiteForm = () => {
   const predefinedCategories = [
     'automotive',
     'beauty',
-    'business, company, e-business',
+    'business, E-business',
     'computer games',
     'construction',
     'cooking',
@@ -138,6 +138,12 @@ const AddWebsiteForm = () => {
   const [showFullForm, setShowFullForm] = useState(false); // Toggle between initial and full form
   const [isExistingSite, setIsExistingSite] = useState(false); // Track if the site already exists globally
 
+
+  const [customValues, setCustomValues] = useState({
+    customMaxLinks: "",
+    customWordsLimit: "",
+  });
+
   // Retrieve user ID from localStorage on component mount
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -188,6 +194,7 @@ const AddWebsiteForm = () => {
       sponsoredContent: false,
       country: '',
     });
+
     setSelectedCategories([]);
     setShowFullForm(false);
     setShowForm(false); // Hide the form
@@ -195,49 +202,51 @@ const AddWebsiteForm = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
 
-    if (type === 'number') {
-      if (value === '') {
-        setFormData((prev) => ({
-          ...prev,
-          [name]: '',
-        }));
-        return;
-      }
-
-      const numericValue = parseFloat(value);
-      if (isNaN(numericValue)) {
-        return;
-      }
-
+    if (name === "maxLinksAllowed") {
       setFormData((prev) => ({
         ...prev,
-        [name]: numericValue,
+        maxLinksAllowed: value,
       }));
       return;
     }
 
-    // Handle custom values for maxLinksAllowed and wordsLimitArticle
-    if (name === 'maxLinksAllowed' && value === '3+') {
+    if (name === "wordsLimitArticle") {
       setFormData((prev) => ({
         ...prev,
-        [name]: '',
+        wordsLimitArticle: value,
       }));
       return;
     }
 
-    if (name === 'wordsLimitArticle' && value === '1000+') {
+    if (name === "customMaxLinks") {
+      setCustomValues((prev) => ({
+        ...prev,
+        customMaxLinks: value,
+      }));
       setFormData((prev) => ({
         ...prev,
-        [name]: '',
+        maxLinksAllowed: value,
+      }));
+      return;
+    }
+
+    if (name === "customWordsLimit") {
+      setCustomValues((prev) => ({
+        ...prev,
+        customWordsLimit: value,
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        wordsLimitArticle: value,
       }));
       return;
     }
 
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -588,60 +597,62 @@ const AddWebsiteForm = () => {
                 {/* Row 1 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium">
-                      Max DoFollow Link Allowed <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="maxLinksAllowed"
-                      value={formData.maxLinksAllowed}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10 border border-gray-300 rounded w-full"
-                    >
-                      <option value="">Select links limit</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3+">3+</option>
-                    </select>
-                    {formData.maxLinksAllowed === '3+' && (
-                      <Input
-                        type="number"
-                        placeholder="Enter custom links limit"
-                        name="maxLinksAllowed"
-                        value={formData.maxLinksAllowed === '3+' ? '' : formData.maxLinksAllowed}
-                        onChange={handleChange}
-                        className="text-sm h-10 mt-2"
-                        min="3"
-                      />
-                    )}
+                  <label className="block text-sm font-medium">
+              Max Links Allowed <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="maxLinksAllowed"
+              value={formData.maxLinksAllowed}
+              onChange={handleChange}
+              required
+              className="w-full border rounded p-2 text-sm"
+            >
+              <option value="">Select limit</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3+">3+</option>
+            </select>
+
+            {formData.maxLinksAllowed === "3+" && (
+              <Input
+                type="number"
+                placeholder="Enter custom limit"
+                name="customMaxLinks"
+                value={customValues.customMaxLinks}
+                onChange={handleChange}
+                className="w-full mt-2"
+                min="3"
+              />
+            )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium">
-                      Words Limit for an Article <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="wordsLimitArticle"
-                      value={formData.wordsLimitArticle}
-                      onChange={handleChange}
-                      required
-                      className="text-sm h-10 border border-gray-300 rounded w-full"
-                    >
-                      <option value="">Select word limit</option>
-                      <option value="250">250</option>
-                      <option value="500">500</option>
-                      <option value="1000+">1000+</option>
-                    </select>
-                    {formData.wordsLimitArticle === '1000+' && (
-                      <Input
-                        type="number"
-                        placeholder="Enter custom word limit"
-                        name="wordsLimitArticle"
-                        value={formData.wordsLimitArticle === '1000+' ? '' : formData.wordsLimitArticle}
-                        onChange={handleChange}
-                        className="text-sm h-10 mt-2"
-                        min="1000"
-                      />
-                    )}
+                  <label className="block text-sm font-medium">
+              Words Limit <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="wordsLimitArticle"
+              value={formData.wordsLimitArticle}
+              onChange={handleChange}
+              required
+              className="w-full border rounded p-2 text-sm"
+            >
+              <option value="">Select limit</option>
+              <option value="250">250</option>
+              <option value="500">500</option>
+              <option value="1000+">1000+</option>
+            </select>
+
+            {formData.wordsLimitArticle === "1000+" && (
+              <Input
+                type="number"
+                placeholder="Enter custom limit"
+                name="customWordsLimit"
+                value={customValues.customWordsLimit}
+                onChange={handleChange}
+                className="w-full mt-2"
+                min="1000"
+              />
+            )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium">

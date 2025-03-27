@@ -24,6 +24,8 @@ import BuyerDashboardStats from "../_components/buyer/BuyerDashboardStats";
 import ProjectsList from "../_components/buyer/ProjectsList";
 import WebsiteStatus from "../_components/modals/WebsiteStatus";
 import PublisherInstructions from "../_components/modals/PublisherInstructions";
+import PublisherList from "../_components/buyer/PublisherList";
+import MySites from "../_components/buyer/MySites";
         
 
         export default function DashboardPage() {
@@ -195,7 +197,7 @@ useEffect(() => {
                 { name: "All My Projects", icon: <GrTask className="w-6 h-6" />, tooltip: "View and manage all your projects" },
                 { name: "All Publishers", icon: <FaUsers className="w-6 h-6" />, tooltip: "Explore and connect with publishers" },
                 { name: "Link Insertions", icon: <FaLink className="w-6 h-6" />, tooltip: "Manage your link insertion tasks" },
-                { name: "Recommended Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Discover recommended sites for collaboration" },
+                { name: "My Sites", icon: <FaStar className="w-6 h-6" />, tooltip: "Discover recommended sites for collaboration" },
                 { name: "Local Citation", icon: <MdContentPaste className="w-6 h-6" />, tooltip: "Discover Offers" },
                 { name: "Content Writing", icon: <FaPenNib className="w-6 h-6" />, tooltip: "View all your sites" },     
                 { name: "My Orders", icon: <FaShoppingBag className="w-6 h-6" />, tooltip: "View all Orders" },
@@ -339,9 +341,9 @@ useEffect(() => {
                             {activeContent === "All My Projects" && <div className="w-full h-full ">
                                 <div className=""><ProjectsList /></div>
                                 </div>}
-                            {/* {activeContent === "All Publishers" && <AllPublishers />} */}
+                            {activeContent === "All Publishers" && <PublisherList />}
                             {/* {activeContent === "Link Insertions" && <LinkInsertions />} */}
-                            {/* {activeContent === "Recommended Sites" && <RecommendedSites />} */} 
+                            {activeContent === "My Sites" && <MySites />} 
                         </main>
                     </div>
 
